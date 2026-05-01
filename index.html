@@ -114,14 +114,12 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 
   <div class="sec">📍 Coordenadas GPS (WGS84)</div>
   <div class="gps-box">
-    <button class="btn btn-primary btn-sm" onclick="getGPS()">📡 Obtener ubicación GPS</button>
+    <button class="btn btn-primary btn-sm" onclick="getGPS()" id="btn-gps">📡 Obtener ubicación GPS</button>
     <div class="gps-coords" id="gps-coords">Sin coordenadas aún</div>
     <div class="gps-status" id="gps-status"></div>
   </div>
-  <div class="row2">
-    <div class="field"><label>Latitud (°)</label><input type="number" step="any" id="f-lat" placeholder="-27.123456" onchange="manualUTM()"></div>
-    <div class="field"><label>Longitud (°)</label><input type="number" step="any" id="f-lon" placeholder="-70.123456" onchange="manualUTM()"></div>
-  </div>
+  <input type="hidden" id="f-lat">
+  <input type="hidden" id="f-lon">
   <div class="row3">
     <div class="field"><label>UTM Norte</label><input type="text" id="f-utmn" placeholder="Auto"></div>
     <div class="field"><label>UTM Este</label><input type="text" id="f-utme" placeholder="Auto"></div>
@@ -338,26 +336,67 @@ function buildMats() {
 function getGPS() {
   var status = document.getElementById('gps-status');
   var coords = document.getElementById('gps-coords');
-  status.textContent = '🔄 Obteniendo ubicación...';
-  if(!navigator.geolocation){ status.textContent='GPS no disponible'; return; }
-  navigator.geolocation.getCurrentPosition(function(pos) {
+  var btn = document.getElementById('btn-gps');
+  if(!navigator.geolocation){ status.textContent='GPS no disponible en este dispositivo'; return; }
+
+  var bestAcc = Infinity;
+  var watchId = null;
+  var attempts = 0;
+  var maxAttempts = 8;
+  var timeout = null;
+
+  btn.disabled = true;
+  btn.textContent = '🔄 Buscando señal...';
+  status.textContent = 'Capturando lecturas para mayor precisión...';
+
+  function done() {
+    if(watchId !== null) navigator.geolocation.clearWatch(watchId);
+    clearTimeout(timeout);
+    btn.disabled = false;
+    btn.textContent = '📡 Actualizar GPS';
+  }
+
+  watchId = navigator.geolocation.watchPosition(function(pos) {
     var lat = pos.coords.latitude;
     var lon = pos.coords.longitude;
-    var alt = pos.coords.altitude;
     var acc = pos.coords.accuracy;
-    document.getElementById('f-lat').value = lat.toFixed(6);
-    document.getElementById('f-lon').value = lon.toFixed(6);
-    if(alt) document.getElementById('f-altitud').value = Math.round(alt);
-    document.getElementById('f-error').value = Math.round(acc);
-    var utm = toUTM(lat, lon);
-    document.getElementById('f-utmn').value = Math.round(utm.N);
-    document.getElementById('f-utme').value = Math.round(utm.E);
-    document.getElementById('f-huso').value = utm.zone;
-    coords.textContent = 'Lat: '+lat.toFixed(6)+'  Lon: '+lon.toFixed(6)+'\nUTM N: '+Math.round(utm.N)+'  E: '+Math.round(utm.E)+'  Huso: '+utm.zone;
-    status.textContent = '✅ Precisión: ±'+Math.round(acc)+' m';
+    var alt = pos.coords.altitude;
+    attempts++;
+
+    status.textContent = 'Lectura '+attempts+'/'+maxAttempts+' — precisión actual: ±'+Math.round(acc)+' m';
+
+    if(acc < bestAcc) {
+      bestAcc = acc;
+      document.getElementById('f-lat').value = lat.toFixed(6);
+      document.getElementById('f-lon').value = lon.toFixed(6);
+      if(alt) document.getElementById('f-altitud').value = Math.round(alt);
+      document.getElementById('f-error').value = Math.round(acc);
+      var utm = toUTM(lat, lon);
+      document.getElementById('f-utmn').value = Math.round(utm.N);
+      document.getElementById('f-utme').value = Math.round(utm.E);
+      document.getElementById('f-huso').value = utm.zone;
+      coords.textContent = 'UTM N: '+Math.round(utm.N)+'  E: '+Math.round(utm.E)+'  Huso: '+utm.zone;
+    }
+
+    // Terminar si logramos buena precisión o alcanzamos máx intentos
+    if(acc <= 5 || attempts >= maxAttempts) {
+      done();
+      status.textContent = '✅ Precisión final: ±'+Math.round(bestAcc)+' m ('+attempts+' lecturas)';
+    }
   }, function(err) {
-    status.textContent = '❌ '+err.message;
-  }, {enableHighAccuracy:true, timeout:15000, maximumAge:0});
+    done();
+    status.textContent = '❌ Error GPS: '+err.message;
+  }, {enableHighAccuracy:true, timeout:20000, maximumAge:0});
+
+  // Timeout de seguridad: 25 segundos máximo
+  timeout = setTimeout(function(){
+    done();
+    if(bestAcc < Infinity) {
+      status.textContent = '✅ Mejor precisión obtenida: ±'+Math.round(bestAcc)+' m';
+    } else {
+      status.textContent = '⏱ Tiempo agotado. Sin señal GPS suficiente.';
+    }
+  }, 25000);
 }
 
 function manualUTM() {

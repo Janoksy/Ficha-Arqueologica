@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#3a7d2c">
+<title>Fichas Arqueológicas — AyS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green-dark:#2d6a1f;
+  --green-main:#3a7d2c;
+  --green-light:#7ab648;
+  --green-pale:#e8f5e2;
+  --green-header:#4a9e38;
+  --text:#222;
+  --border:#ccc;
+  --white:#fff;
+}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4ee;color:var(--text);min-height:100vh}
+
+/* HEADER */
+.app-header{background:var(--green-dark);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.app-header .logo-box{background:var(--green-main);border-radius:10px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;letter-spacing:-1px;flex-shrink:0}
+.app-header h1{font-size:15px;font-weight:700;line-height:1.2}
+.app-header p{font-size:11px;opacity:.8}
+
+/* NAV */
+nav{display:flex;background:var(--green-main);overflow-x:auto}
+nav button{flex:1;min-width:80px;padding:10px 8px;border:none;background:none;color:#fff;font-size:12px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;transition:.2s;opacity:.75}
+nav button.active{border-bottom-color:#fff;opacity:1;background:rgba(255,255,255,.1)}
+
+/* SCREENS */
+.screen{display:none;padding:16px;max-width:600px;margin:0 auto}
+.screen.active{display:block}
+
+/* CARDS */
+.ficha-card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.1);cursor:pointer;border-left:4px solid var(--green-light)}
+.ficha-card h3{font-size:14px;color:var(--green-dark);margin-bottom:4px}
+.ficha-card p{font-size:12px;color:#666}
+.ficha-card .badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.badge{background:var(--green-pale);color:var(--green-dark);padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:.2s}
+.btn-primary{background:var(--green-main);color:#fff}
+.btn-primary:hover{background:var(--green-dark)}
+.btn-danger{background:#c0392b;color:#fff}
+.btn-outline{background:#fff;color:var(--green-dark);border:2px solid var(--green-main)}
+.btn-sm{padding:7px 12px;font-size:12px}
+.fab{position:fixed;bottom:24px;right:24px;background:var(--green-main);color:#fff;border:none;border-radius:50%;width:56px;height:56px;font-size:28px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3);z-index:50;display:flex;align-items:center;justify-content:center}
+
+/* FORM */
+.section-title{background:var(--green-main);color:#fff;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:700;margin:16px 0 10px;text-transform:uppercase;letter-spacing:.5px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--green-dark);margin-bottom:4px}
+.field input,.field textarea,.field select{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:#fff;transition:.2s}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--green-main)}
+.field textarea{min-height:80px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* CHECKBOXES */
+.check-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.check-item{display:flex;align-items:center;gap:5px;background:var(--green-pale);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px}
+.check-item input{accent-color:var(--green-main);width:15px;height:15px}
+
+/* MATERIALES TABLE */
+.mat-table{width:100%;border-collapse:collapse;font-size:13px}
+.mat-table th{background:var(--green-main);color:#fff;padding:7px 8px;text-align:left;font-size:12px}
+.mat-table td{padding:6px 8px;border-bottom:1px solid #eee}
+.mat-table tr:nth-child(even) td{background:#f9f9f9}
+.mat-table input{width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px}
+
+/* GPS */
+.gps-box{background:var(--green-pale);border:1px solid var(--green-light);border-radius:10px;padding:12px;margin-bottom:12px}
+.gps-box .coords{font-family:monospace;font-size:13px;color:var(--green-dark);margin-top:6px}
+.gps-status{font-size:12px;color:#666;margin-top:4px}
+
+/* PHOTOS */
+.photos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.photo-thumb{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:#eee}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-thumb .del-photo{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.add-photo-btn{aspect-ratio:1;border:2px dashed var(--green-light);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--green-main);font-size:12px;gap:4px;background:#fff}
+
+/* FORM ACTIONS */
+.form-actions{display:flex;gap:10px;margin-top:20px;padding-bottom:80px;flex-wrap:wrap}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:40px 20px;color:#888}
+.empty .icon{font-size:48px;margin-bottom:12px}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:24px;max-width:320px;width:90%;text-align:center}
+.modal h3{margin-bottom:10px;color:var(--green-dark)}
+.modal p{font-size:13px;color:#666;margin-bottom:16px}
+.modal-actions{display:flex;gap:10px;justify-content:center}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:300;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* PDF preview note */
+.info-box{background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 12px;font-size:12px;color:#856404;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="logo-box">as</div>
+  <div>
+    <h1>Fichas Arqueológicas</h1>
+    <p>Ambiental y Sectorial</p>
+  </div>
+</div>
+
+<nav>
+  <button class="active" onclick="showScreen('home')">🗂 Fichas</button>
+  <button onclick="showScreen('form')">➕ Nueva</button>
+  <button onclick="showScreen('config')">⚙️ Config</button>
+</nav>
+
+<!-- HOME -->
+<div id="screen-home" class="screen active">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;margin-top:4px">
+    <h2 style="font-size:16px;color:var(--green-dark)">Fichas guardadas</h2>
+    <span id="ficha-count" style="font-size:12px;color:#888"></span>
+  </div>
+  <div id="fichas-list"></div>
+</div>
+
+<!-- FORM -->
+<div id="screen-form" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+    <h2 style="font-size:15px;color:var(--green-dark)" id="form-title">Nueva Ficha</h2>
+    <button class="btn btn-sm btn-outline" onclick="resetForm()">🔄 Limpiar</button>
+  </div>
+
+  <div class="section-title">📋 Identificación General</div>
+  <div class="field"><label>Nombre Sitio / Hallazgo</label><input type="text" id="f-nombre-sitio" placeholder="Ej: PFV Pauna Solar SA01"></div>
+  <div class="field"><label>Nombre Unidad</label><input type="text" id="f-nombre-unidad" placeholder="Ej: Unidad 1"></div>
+  <div class="field"><label>Proyecto</label><input type="text" id="f-proyecto" placeholder="Ej: PFV Pauna Solar"></div>
+  <div class="row3">
+    <div class="field"><label>Región</label><input type="text" id="f-region" placeholder="Ej: Atacama"></div>
+    <div class="field"><label>Provincia</label><input type="text" id="f-provincia" placeholder="Ej: Chañaral"></div>
+    <div class="field"><label>Comuna</label><input type="text" id="f-comuna" placeholder="Ej: Diego de Almagro"></div>
+  </div>
+
+  <div class="section-title">📍 Coordenadas GPS (WGS84)</div>
+  <div class="gps-box">
+    <button class="btn btn-primary btn-sm" onclick="getGPS()">📡 Obtener ubicación GPS</button>
+    <div class="coords" id="gps-coords">Sin coordenadas aún</div>
+    <div class="gps-status" id="gps-status"></div>
+  </div>
+  <div class="row2">
+    <div class="field"><label>Latitud (DD)</label><input type="number" step="any" id="f-lat" placeholder="-27.123456"></div>
+    <div class="field"><label>Longitud (DD)</label><input type="number" step="any" id="f-lon" placeholder="-70.123456"></div>
+  </div>
+  <div class="row3">
+    <div class="field"><label>UTM Norte</label><input type="text" id="f-utm-n" placeholder="Auto"></div>
+    <div class="field"><label>UTM Este</label><input type="text" id="f-utm-e" placeholder="Auto"></div>
+    <div class="field"><label>Huso</label><input type="text" id="f-huso" placeholder="Auto"></div>
+  </div>
+  <div class="row2">
+    <div class="field"><label>Error GPS (m)</label><input type="number" id="f-gps-error" placeholder="Ej: 3"></div>
+    <div class="field"><label>Altitud (msnm)</label><input type="number" id="f-altitud" placeholder="Ej: 1124"></div>
+  </div>
+
+  <div class="section-title">🏛 Características del Sitio</div>
+  <div class="field"><label>Tipo</label><input type="text" id="f-tipo" placeholder="Ej: Estructura tipo plataforma"></div>
+  <div class="field"><label>Tipología Funcional</label>
+    <div class="check-group" id="tipologia-checks">
+      <label class="check-item"><input type="checkbox" value="Doméstico/habitacional"> Doméstico/habitacional</label>
+      <label class="check-item"><input type="checkbox" value="Productivo"> Productivo</label>
+      <label class="check-item"><input type="checkbox" value="Tránsito"> Tránsito</label>
+      <label class="check-item"><input type="checkbox" value="Ritual"> Ritual</label>
+      <label class="check-item"><input type="checkbox" value="Entierro"> Entierro</label>
+      <label class="check-item"><input type="checkbox" value="Indeterminado"> Indeterminado</label>
+    </div>
+    <input type="text" id="f-tipologia-otro" placeholder="Otro (especificar)" style="margin-top:6px">
+  </div>
+  <div class="field"><label>Período</label>
+    <div class="check-group" id="periodo-checks">
+      <label class="check-item"><input type="checkbox" value="Prehispánico"> Prehispánico</label>
+      <label class="check-item"><input type="checkbox" value="Histórico"> Histórico</label>
+      <label class="check-item"><input type="checkbox" value="Indeterminado"> Indeterminado</label>
+    </div>
+    <input type="text" id="f-periodo-especifico" placeholder="Período específico (si aplica)" style="margin-top:6px">
+  </div>
+
+  <div class="section-title">🔍 Recolección Superficial</div>
+  <div class="field"><label>Tipo de recolección</label>
+    <div class="check-group">
+      <label class="check-item"><input type="radio" name="tipo-rec" value="Decapado (5 cm)"> Decapado (5 cm)</label>
+      <label class="check-item"><input type="radio" name="tipo-rec" value="Barrido"> Barrido</label>
+    </div>
+  </div>
+  <div class="section-title" style="font-size:11px;padding:6px 10px;margin:10px 0 8px">DIMENSIONES DE LA UNIDAD</div>
+  <div class="row3">
+    <div class="field"><label>Largo (m)</label><input type="number" step="any" id="f-largo" onchange="calcArea()"></div>
+    <div class="field"><label>Ancho (m)</label><input type="number" step="any" id="f-ancho" onchange="calcArea()"></div>
+    <div class="field"><label>Área (m²)</label><input type="number" step="any" id="f-area" placeholder="Auto"></div>
+  </div>
+
+  <div class="section-title">🪨 Material Arqueológico Recolectado</div>
+  <table class="mat-table">
+    <thead><tr><th>Tipología</th><th>Cantidad</th><th>Descripción general</th></tr></thead>
+    <tbody id="materiales-tbody">
+    </tbody>
+  </table>
+
+  <div class="section-title">🔬 Descripción Materiales Diagnósticos</div>
+  <div class="field"><textarea id="f-diagnosticos" placeholder="Descripción detallada de materiales diagnósticos..."></textarea></div>
+
+  <div class="section-title">🌄 Emplazamiento</div>
+  <div class="field"><label>Tipo de emplazamiento</label>
+    <div class="check-group" id="emplazamiento-checks">
+      <label class="check-item"><input type="checkbox" value="Llanura"> Llanura</label>
+      <label class="check-item"><input type="checkbox" value="Lomaje"> Lomaje</label>
+      <label class="check-item"><input type="checkbox" value="Ladera"> Ladera</label>
+      <label class="check-item"><input type="checkbox" value="Quebrada"> Quebrada</label>
+      <label class="check-item"><input type="checkbox" value="Cerro"> Cerro</label>
+      <label class="check-item"><input type="checkbox" value="Terraza fluvial"> Terraza fluvial</label>
+    </div>
+    <input type="text" id="f-emplazamiento-otro" placeholder="Otro (especificar)" style="margin-top:6px">
+  </div>
+  <div class="field"><label>Descripción general del emplazamiento</label><textarea id="f-emplazamiento-desc" placeholder="Describir el emplazamiento..."></textarea></div>
+
+  <div class="section-title">📊 Estado de Conservación</div>
+  <div class="field"><label>Estado general</label>
+    <div class="check-group">
+      <label class="check-item"><input type="radio" name="conservacion" value="Bueno"> Bueno</label>
+      <label class="check-item"><input type="radio" name="conservacion" value="Regular"> Regular</label>
+      <label class="check-item"><input type="radio" name="conservacion" value="Malo"> Malo</label>
+    </div>
+  </div>
+  <div class="field"><label>Descripción estado de conservación</label><textarea id="f-conservacion-desc" placeholder="Describir estado de conservación..."></textarea></div>
+
+  <div class="section-title">👤 Responsables</div>
+  <div class="field"><label>Responsable de unidad</label><input type="text" id="f-responsable" placeholder="Nombre completo"></div>
+  <div class="field"><label>Ayudante/es de unidad</label><input type="text" id="f-ayudantes" placeholder="Nombres separados por coma"></div>
+  <div class="row3">
+    <div class="field" style="grid-column:span 2"><label>Fecha</label><input type="date" id="f-fecha"></div>
+    <div class="field"><label>Campaña</label><input type="text" id="f-campana" placeholder="Ej: 1"></div>
+  </div>
+
+  <div class="section-title">📸 Fotografías</div>
+  <div class="photos-grid" id="photos-grid">
+    <label class="add-photo-btn" for="photo-input">
+      <span style="font-size:28px">📷</span>
+      <span>Agregar foto</span>
+    </label>
+  </div>
+  <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="addPhoto(event)" multiple>
+
+  <div class="section-title">📝 Observaciones / Croquis</div>
+  <div class="field"><textarea id="f-observaciones" placeholder="Observaciones adicionales..."></textarea></div>
+  <div class="info-box">💡 El croquis se puede adjuntar como fotografía en la sección de fotos.</div>
+
+  <div class="form-actions">
+    <button class="btn btn-primary" onclick="saveFicha()">💾 Guardar Ficha</button>
+    <button class="btn btn-outline" id="btn-export" onclick="exportPDF()" style="display:none">📄 Exportar PDF</button>
+    <button class="btn btn-danger btn-sm" id="btn-delete" onclick="deleteFicha()" style="display:none">🗑 Eliminar</button>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div id="screen-config" class="screen">
+  <div class="section-title">⚙️ Configuración</div>
+  <div class="field"><label>Nombre de empresa / proyecto</label><input type="text" id="cfg-empresa" value="PFV Pauna Solar" onchange="saveConfig()"></div>
+  <div class="field"><label>Nombre del arqueólogo responsable (predeterminado)</label><input type="text" id="cfg-responsable" onchange="saveConfig()"></div>
+  <div class="field"><label>Campaña actual</label><input type="text" id="cfg-campana" onchange="saveConfig()"></div>
+  <div style="margin-top:16px;padding:12px;background:#fff;border-radius:10px;font-size:12px;color:#666">
+    <b>📱 Instalar como App:</b><br>
+    En iOS: Compartir → "Añadir a pantalla de inicio"<br>
+    En Android: Menú → "Agregar a pantalla de inicio"
+  </div>
+  <div style="margin-top:12px;padding:12px;background:var(--green-pale);border-radius:10px;font-size:12px;color:var(--green-dark)">
+    <b>✅ Funcionamiento offline:</b> Todos los datos se guardan localmente en el dispositivo. No necesitas internet para guardar fichas ni exportar PDF.
+  </div>
+</div>
+
+<!-- MODAL CONFIRM -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal">
+    <h3>⚠️ Eliminar ficha</h3>
+    <p>¿Estás seguro que deseas eliminar esta ficha? Esta acción no se puede deshacer.</p>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="confirmDelete()">Eliminar</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────
+const MATERIALES = ['Cerámica','Lítico','Osteofauna','Loza','Porcelana','Gres','Vidrio','Metal','Malacológico','Textil','Cuero'];
+let fichas = [];
+let currentId = null;
+let photos = []; // base64 array
+let cfg = {};
+
+// ─── INIT ────────────────────────────────────────────────────────────
+function init(){
+  fichas = JSON.parse(localStorage.getItem('fichas_ays') || '[]');
+  cfg = JSON.parse(localStorage.getItem('cfg_ays') || '{}');
+  buildMaterialesTable();
+  loadConfig();
+  renderFichas();
+  setDefaultDate();
+}
+
+function setDefaultDate(){
+  const d = new Date();
+  const str = d.toISOString().split('T')[0];
+  document.getElementById('f-fecha').value = str;
+}
+
+function loadConfig(){
+  if(cfg.empresa) document.getElementById('cfg-empresa').value = cfg.empresa;
+  if(cfg.responsable) document.getElementById('cfg-responsable').value = cfg.responsable;
+  if(cfg.campana) document.getElementById('cfg-campana').value = cfg.campana;
+}
+
+function saveConfig(){
+  cfg.empresa = document.getElementById('cfg-empresa').value;
+  cfg.responsable = document.getElementById('cfg-responsable').value;
+  cfg.campana = document.getElementById('cfg-campana').value;
+  localStorage.setItem('cfg_ays', JSON.stringify(cfg));
+  showToast('Configuración guardada');
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  const idx = {home:0,form:1,config:2}[name];
+  document.querySelectorAll('nav button')[idx].classList.add('active');
+  if(name==='home') renderFichas();
+}
+
+// ─── MATERIALES TABLE ─────────────────────────────────────────────────
+function buildMaterialesTable(){
+  const tb = document.getElementById('materiales-tbody');
+  tb.innerHTML = MATERIALES.map(m=>`
+    <tr>
+      <td><b>${m}</b></td>
+      <td><input type="number" min="0" id="mat-qty-${m}" placeholder="0"></td>
+      <td><input type="text" id="mat-desc-${m}" placeholder="Descripción..."></td>
+    </tr>`).join('');
+}
+
+// ─── GPS ─────────────────────────────────────────────────────────────
+function getGPS(){
+  const status = document.getElementById('gps-status');
+  const coords = document.getElementById('gps-coords');
+  status.textContent = '🔄 Obteniendo ubicación...';
+  if(!navigator.geolocation){status.textContent='GPS no disponible';return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    const alt = pos.coords.altitude;
+    const acc = pos.coords.accuracy;
+    document.getElementById('f-lat').value = lat.toFixed(6);
+    document.getElementById('f-lon').value = lon.toFixed(6);
+    if(alt) document.getElementById('f-altitud').value = Math.round(alt);
+    document.getElementById('f-gps-error').value = Math.round(acc);
+    const utm = latLonToUTM(lat,lon);
+    document.getElementById('f-utm-n').value = Math.round(utm.N);
+    document.getElementById('f-utm-e').value = Math.round(utm.E);
+    document.getElementById('f-huso').value = utm.zone;
+    coords.textContent = `Lat: ${lat.toFixed(6)}  Lon: ${lon.toFixed(6)}\nUTM N: ${Math.round(utm.N)}  E: ${Math.round(utm.E)}  H${utm.zone}`;
+    status.textContent = `✅ Precisión: ±${Math.round(acc)} m`;
+  }, err=>{
+    status.textContent = '❌ Error: '+err.message;
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+}
+
+// Update UTM when lat/lon changed manually
+['f-lat','f-lon'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',()=>{
+    const lat=parseFloat(document.getElementById('f-lat').value);
+    const lon=parseFloat(document.getElementById('f-lon').value);
+    if(!isNaN(lat)&&!isNaN(lon)){
+      const utm=latLonToUTM(lat,lon);
+      document.getElementById('f-utm-n').value=Math.round(utm.N);
+      document.getElementById('f-utm-e').value=Math.round(utm.E);
+      document.getElementById('f-huso').value=utm.zone;
+    }
+  });
+});
+
+// WGS84 → UTM conversion
+function latLonToUTM(lat,lon){
+  const a=6378137,f=1/298.257223563,b=a*(1-f);
+  const e2=1-(b*b)/(a*a),e=Math.sqrt(e2),e1sq=e2/(1-e2);
+  const zone=Math.floor((lon+180)/6)+1;
+  const lon0=(zone-1)*6-180+3;
+  const k0=0.9996, N0=lat>=0?0:10000000, E0=500000;
+  const phi=lat*Math.PI/180, lam=(lon-lon0)*Math.PI/180;
+  const N=a/Math.sqrt(1-e2*Math.sin(phi)*Math.sin(phi));
+  const T=Math.tan(phi)*Math.tan(phi);
+  const C=e1sq*Math.cos(phi)*Math.cos(phi);
+  const A=Math.cos(phi)*lam;
+  const e2n=e2; const n=(a-b)/(a+b);
+  const M=a*((1-e2n/4-3*e2n*e2n/64-5*e2n*e2n*e2n/256)*phi
+    -(3*e2n/8+3*e2n*e2n/32+45*e2n*e2n*e2n/1024)*Math.sin(2*phi)
+    +(15*e2n*e2n/256+45*e2n*e2n*e2n/1024)*Math.sin(4*phi)
+    -(35*e2n*e2n*e2n/3072)*Math.sin(6*phi));
+  const Easting=k0*N*(A+(1-T+C)*A*A*A/6+(5-18*T+T*T+72*C-58*e1sq)*A*A*A*A*A/120)+E0;
+  const Northing=k0*(M+N*Math.tan(phi)*(A*A/2+(5-T+9*C+4*C*C)*A*A*A*A/24+(61-58*T+T*T+600*C-330*e1sq)*A*A*A*A*A*A/720))+N0;
+  return {E:Easting,N:Northing,zone:zone+(lat>=0?'':'S')};
+}
+
+// ─── AREA ────────────────────────────────────────────────────────────
+function calcArea(){
+  const l=parseFloat(document.getElementById('f-largo').value)||0;
+  const a=parseFloat(document.getElementById('f-ancho').value)||0;
+  if(l&&a) document.getElementById('f-area').value=(l*a).toFixed(2);
+}
+
+// ─── PHOTOS ──────────────────────────────────────────────────────────
+function addPhoto(e){
+  const files=[...e.target.files];
+  files.forEach(f=>{
+    const r=new FileReader();
+    r.onload=ev=>{
+      photos.push(ev.target.result);
+      renderPhotos();
+    };
+    r.readAsDataURL(f);
+  });
+  e.target.value='';
+}
+
+function renderPhotos(){
+  const grid=document.getElementById('photos-grid');
+  grid.innerHTML=photos.map((p,i)=>`
+    <div class="photo-thumb">
+      <img src="${p}">
+      <button class="del-photo" onclick="removePhoto(${i})">×</button>
+    </div>`).join('')+`
+    <label class="add-photo-btn" for="photo-input">
+      <span style="font-size:28px">📷</span>
+      <span>Agregar</span>
+    </label>`;
+}
+
+function removePhoto(i){ photos.splice(i,1); renderPhotos(); }
+
+// ─── FORM GET/SET ─────────────────────────────────────────────────────
+function getChecked(groupId){
+  return [...document.querySelectorAll(`#${groupId} input[type=checkbox]:checked`)].map(c=>c.value);
+}
+function getRadio(name){
+  const el=document.querySelector(`input[name="${name}"]:checked`);
+  return el?el.value:'';
+}
+function setChecked(groupId,vals){
+  document.querySelectorAll(`#${groupId} input[type=checkbox]`).forEach(c=>{
+    c.checked=vals&&vals.includes(c.value);
+  });
+}
+function setRadio(name,val){
+  const el=document.querySelector(`input[name="${name}"][value="${val}"]`);
+  if(el)el.checked=true;
+}
+
+function getFormData(){
+  const mats={};
+  MATERIALES.forEach(m=>{
+    mats[m]={qty:document.getElementById('mat-qty-'+m).value||'',desc:document.getElementById('mat-desc-'+m).value||''};
+  });
+  return {
+    id: currentId||Date.now()+'',
+    proyecto: document.getElementById('f-proyecto').value,
+    nombreSitio: document.getElementById('f-nombre-sitio').value,
+    nombreUnidad: document.getElementById('f-nombre-unidad').value,
+    region: document.getElementById('f-region').value,
+    provincia: document.getElementById('f-provincia').value,
+    comuna: document.getElementById('f-comuna').value,
+    lat: document.getElementById('f-lat').value,
+    lon: document.getElementById('f-lon').value,
+    utmN: document.getElementById('f-utm-n').value,
+    utmE: document.getElementById('f-utm-e').value,
+    huso: document.getElementById('f-huso').value,
+    gpsError: document.getElementById('f-gps-error').value,
+    altitud: document.getElementById('f-altitud').value,
+    tipo: document.getElementById('f-tipo').value,
+    tipologiaFuncional: getChecked('tipologia-checks'),
+    tipologiaOtro: document.getElementById('f-tipologia-otro').value,
+    periodo: getChecked('periodo-checks'),
+    periodoEspecifico: document.getElementById('f-periodo-especifico').value,
+    tipoRecoleccion: getRadio('tipo-rec'),
+    largo: document.getElementById('f-largo').value,
+    ancho: document.getElementById('f-ancho').value,
+    area: document.getElementById('f-area').value,
+    materiales: mats,
+    diagnosticos: document.getElementById('f-diagnosticos').value,
+    emplazamiento: getChecked('emplazamiento-checks'),
+    emplazamientoOtro: document.getElementById('f-emplazamiento-otro').value,
+    emplazamientoDesc: document.getElementById('f-emplazamiento-desc').value,
+    conservacion: getRadio('conservacion'),
+    conservacionDesc: document.getElementById('f-conservacion-desc').value,
+    responsable: document.getElementById('f-responsable').value,
+    ayudantes: document.getElementById('f-ayudantes').value,
+    fecha: document.getElementById('f-fecha').value,
+    campana: document.getElementById('f-campana').value,
+    observaciones: document.getElementById('f-observaciones').value,
+    photos: photos,
+    creado: new Date().toISOString()
+  };
+}
+
+function setFormData(d){
+  document.getElementById('f-proyecto').value=d.proyecto||'';
+  document.getElementById('f-nombre-sitio').value=d.nombreSitio||'';
+  document.getElementById('f-nombre-unidad').value=d.nombreUnidad||'';
+  document.getElementById('f-region').value=d.region||'';
+  document.getElementById('f-provincia').value=d.provincia||'';
+  document.getElementById('f-comuna').value=d.comuna||'';
+  document.getElementById('f-lat').value=d.lat||'';
+  document.getElementById('f-lon').value=d.lon||'';
+  document.getElementById('f-utm-n').value=d.utmN||'';
+  document.getElementById('f-utm-e').value=d.utmE||'';
+  document.getElementById('f-huso').value=d.huso||'';
+  document.getElementById('f-gps-error').value=d.gpsError||'';
+  document.getElementById('f-altitud').value=d.altitud||'';
+  document.getElementById('f-tipo').value=d.tipo||'';
+  setChecked('tipologia-checks',d.tipologiaFuncional);
+  document.getElementById('f-tipologia-otro').value=d.tipologiaOtro||'';
+  setChecked('periodo-checks',d.periodo);
+  document.getElementById('f-periodo-especifico').value=d.periodoEspecifico||'';
+  setRadio('tipo-rec',d.tipoRecoleccion);
+  document.getElementById('f-largo').value=d.largo||'';
+  document.getElementById('f-ancho').value=d.ancho||'';
+  document.getElementById('f-area').value=d.area||'';
+  MATERIALES.forEach(m=>{
+    if(d.materiales&&d.materiales[m]){
+      document.getElementById('mat-qty-'+m).value=d.materiales[m].qty||'';
+      document.getElementById('mat-desc-'+m).value=d.materiales[m].desc||'';
+    }
+  });
+  document.getElementById('f-diagnosticos').value=d.diagnosticos||'';
+  setChecked('emplazamiento-checks',d.emplazamiento);
+  document.getElementById('f-emplazamiento-otro').value=d.emplazamientoOtro||'';
+  document.getElementById('f-emplazamiento-desc').value=d.emplazamientoDesc||'';
+  setRadio('conservacion',d.conservacion);
+  document.getElementById('f-conservacion-desc').value=d.conservacionDesc||'';
+  document.getElementById('f-responsable').value=d.responsable||'';
+  document.getElementById('f-ayudantes').value=d.ayudantes||'';
+  document.getElementById('f-fecha').value=d.fecha||'';
+  document.getElementById('f-campana').value=d.campana||'';
+  document.getElementById('f-observaciones').value=d.observaciones||'';
+  photos=d.photos||[];
+  renderPhotos();
+  const gpsBox=document.getElementById('gps-coords');
+  if(d.lat&&d.lon) gpsBox.textContent=`Lat: ${d.lat}  Lon: ${d.lon}\nUTM N: ${d.utmN}  E: ${d.utmE}  H${d.huso}`;
+}
+
+// ─── SAVE / LOAD / DELETE ─────────────────────────────────────────────
+function saveFicha(){
+  const data=getFormData();
+  if(!data.nombreSitio){showToast('⚠️ Ingresa el nombre del sitio');return;}
+  const idx=fichas.findIndex(f=>f.id===data.id);
+  if(idx>=0) fichas[idx]=data;
+  else fichas.unshift(data);
+  currentId=data.id;
+  localStorage.setItem('fichas_ays',JSON.stringify(fichas));
+  document.getElementById('btn-export').style.display='inline-flex';
+  document.getElementById('btn-delete').style.display='inline-flex';
+  document.getElementById('form-title').textContent='Editando: '+data.nombreSitio;
+  showToast('✅ Ficha guardada correctamente');
+}
+
+function resetForm(){
+  currentId=null; photos=[];
+  document.getElementById('screen-form').querySelectorAll('input:not([type=radio]):not([type=checkbox]):not([type=file]),textarea').forEach(el=>el.value='');
+  document.querySelectorAll('input[type=checkbox],input[type=radio]').forEach(el=>el.checked=false);
+  buildMaterialesTable();
+  renderPhotos();
+  setDefaultDate();
+  document.getElementById('gps-coords').textContent='Sin coordenadas aún';
+  document.getElementById('gps-status').textContent='';
+  document.getElementById('btn-export').style.display='none';
+  document.getElementById('btn-delete').style.display='none';
+  document.getElementById('form-title').textContent='Nueva Ficha';
+}
+
+function loadFicha(id){
+  const d=fichas.find(f=>f.id===id);
+  if(!d)return;
+  currentId=id;
+  setFormData(d);
+  document.getElementById('btn-export').style.display='inline-flex';
+  document.getElementById('btn-delete').style.display='inline-flex';
+  document.getElementById('form-title').textContent='Editando: '+d.nombreSitio;
+  showScreen('form');
+}
+
+function deleteFicha(){ document.getElementById('modal-delete').classList.add('open'); }
+function closeModal(){ document.getElementById('modal-delete').classList.remove('open'); }
+function confirmDelete(){
+  fichas=fichas.filter(f=>f.id!==currentId);
+  localStorage.setItem('fichas_ays',JSON.stringify(fichas));
+  closeModal(); resetForm(); showScreen('home');
+  showToast('🗑 Ficha eliminada');
+}
+
+function renderFichas(){
+  const list=document.getElementById('fichas-list');
+  document.getElementById('ficha-count').textContent=fichas.length+' ficha'+(fichas.length!==1?'s':'');
+  if(!fichas.length){
+    list.innerHTML=`<div class="empty"><div class="icon">🏛</div><p>No hay fichas guardadas.<br>Toca <b>Nueva</b> para comenzar.</p></div>`;
+    return;
+  }
+  list.innerHTML=fichas.map(f=>`
+    <div class="ficha-card" onclick="loadFicha('${f.id}')">
+      <h3>📍 ${f.nombreSitio||'Sin nombre'}</h3>
+      <p>${f.proyecto||''} ${f.region?' — '+f.region:''}</p>
+      <div class="badges">
+        ${f.fecha?`<span class="badge">📅 ${f.fecha}</span>`:''}
+        ${f.nombreUnidad?`<span class="badge">${f.nombreUnidad}</span>`:''}
+        ${f.lat?`<span class="badge">🌐 GPS</span>`:''}
+        ${f.photos&&f.photos.length?`<span class="badge">📷 ${f.photos.length}</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+// ─── PDF EXPORT ───────────────────────────────────────────────────────
+function exportPDF(){
+  const data=getFormData();
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const pw=210, ph=297, ml=14, mr=14, mt=14;
+  let y=mt;
+  const cw=pw-ml-mr;
+
+  // Colors
+  const GREEN=[58,125,44];
+  const GREEN_LIGHT=[122,182,72];
+  const GREEN_PALE=[232,245,226];
+  const DARK=[30,30,30];
+
+  // Logo SVG as rect (since we can't embed the actual image in this sandbox)
+  // Draw logo box
+  doc.setFillColor(...GREEN);
+  doc.roundedRect(ml,y,22,22,3,3,'F');
+  doc.setFillColor(...GREEN_LIGHT);
+  doc.roundedRect(ml,y+13,22,9,3,3,'F');
+  doc.setFillColor(...GREEN);
+  doc.rect(ml,y+13,22,4,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(14);
+  doc.text('as',ml+4,y+11);
+  doc.setFontSize(5.5);
+  doc.text('Ambiental',ml+2,y+17.5);
+  doc.text('y Sectorial',ml+2,y+21);
+
+  // Header title
+  doc.setTextColor(...DARK);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.text('FICHA ARQUEOLÓGICA DE RECOLECCIÓN SUPERFICIAL',ml+26,y+7);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica','normal');
+  doc.text('PROYECTO '+( data.proyecto||'').toUpperCase(),ml+26,y+13);
+
+  y+=26;
+
+  // ─ Helper functions ─
+  function hLine(yy){
+    doc.setDrawColor(200,200,200);
+    doc.line(ml,yy,pw-mr,yy);
+  }
+  function sectionHeader(title,yy){
+    doc.setFillColor(...GREEN);
+    doc.rect(ml,yy,cw,6,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(7.5);
+    doc.text(title,ml+2,yy+4.2);
+    return yy+6;
+  }
+  function labelVal(label,val,x,yy,w){
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(7);
+    doc.setTextColor(80,80,80);
+    doc.text(label,x,yy);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(...DARK);
+    doc.setFontSize(8);
+    const lines=doc.splitTextToSize(val||'—',w-2);
+    doc.text(lines,x,yy+4);
+    return yy+4+(lines.length-1)*3.5;
+  }
+  function box(x,yy,w,h,fill){
+    doc.setFillColor(...(fill||[255,255,255]));
+    doc.setDrawColor(180,180,180);
+    doc.rect(x,yy,w,h,fill?'FD':'D');
+  }
+  function checkRow(label,checked,x,yy){
+    doc.setFillColor(checked?...GREEN:[255,255,255]);
+    doc.setDrawColor(...GREEN);
+    doc.rect(x,yy-3,3.5,3.5,checked?'F':'D');
+    if(checked){doc.setTextColor(255,255,255);doc.setFontSize(5);doc.text('✓',x+0.5,yy-0.3);}
+    doc.setTextColor(...DARK);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7.5);
+    doc.text(label,x+4.5,yy-0.3);
+  }
+  function checkPage(needed){
+    if(y+needed>ph-14){doc.addPage();y=mt;}
+  }
+
+  // ─ IDENTIFICACIÓN ─
+  y=sectionHeader('IDENTIFICACIÓN GENERAL',y)+3;
+  box(ml,y,cw/2,8);
+  box(ml+cw/2,y,cw/2,8);
+  doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(80,80,80);
+  doc.text('NOMBRE SITIO/HALLAZGO',ml+1,y+3);
+  doc.text('NOMBRE UNIDAD',ml+cw/2+1,y+3);
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);
+  doc.text(data.nombreSitio||'',ml+1,y+7);
+  doc.text(data.nombreUnidad||'',ml+cw/2+1,y+7);
+  y+=8;
+  const w3=cw/3;
+  box(ml,y,w3,7);box(ml+w3,y,w3,7);box(ml+w3*2,y,w3,7);
+  doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(80,80,80);
+  doc.text('REGIÓN',ml+1,y+3);doc.text('PROVINCIA',ml+w3+1,y+3);doc.text('COMUNA',ml+w3*2+1,y+3);
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);
+  doc.text(data.region||'',ml+1,y+6.5);doc.text(data.provincia||'',ml+w3+1,y+6.5);doc.text(data.comuna||'',ml+w3*2+1,y+6.5);
+  y+=10;
+
+  // ─ GPS ─
+  y=sectionHeader('COORDENADAS WGS84',y)+3;
+  const gw=cw/4;
+  ['WGS84 UTM N','UTM E','HUSO','ALTITUD (msnm)'].forEach((lbl,i)=>{
+    box(ml+gw*i,y,gw,7);
+    doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(80,80,80);
+    doc.text(lbl,ml+gw*i+1,y+3);
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);
+    const vals=[data.utmN,data.utmE,data.huso,data.altitud];
+    doc.text(vals[i]||'',ml+gw*i+1,y+6.5);
+  });
+  y+=7;
+  ['LAT (°)','LON (°)','Error GPS (±m)',''].forEach((lbl,i)=>{
+    box(ml+gw*i,y,gw,7);
+    doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(80,80,80);
+    if(lbl)doc.text(lbl,ml+gw*i+1,y+3);
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);
+    const vals=[data.lat,data.lon,data.gpsError,''];
+    doc.text(vals[i]||'',ml+gw*i+1,y+6.5);
+  });
+  y+=10;
+
+  // ─ CARACTERÍSTICAS ─
+  y=sectionHeader('CARACTERÍSTICAS GENERALES DEL SITIO/HALLAZGO',y)+3;
+  box(ml,y,cw,7);
+  doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(80,80,80);
+  doc.text('TIPO',ml+1,y+3);
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);
+  doc.text(data.tipo||'',ml+20,y+6.5);
+  y+=9;
+
+  // Tipología
+  doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+  doc.text('Tipología funcional:',ml,y+3);
+  const tipOpts=['Doméstico/habitacional','Productivo','Tránsito','Ritual','Entierro','Indeterminado'];
+  let tx=ml+32;
+  tipOpts.forEach(t=>{
+    checkRow(t,data.tipologiaFuncional&&data.tipologiaFuncional.includes(t),tx,y+3);
+    tx+=28;
+    if(tx>pw-mr-20){tx=ml+32;y+=6;}
+  });
+  if(data.tipologiaOtro){y+=6;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...DARK);doc.text('Otro: '+data.tipologiaOtro,ml,y+3);}
+  y+=8;
+
+  // Período
+  doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+  doc.text('Período:',ml,y+3);
+  const perOpts=['Prehispánico','Histórico','Indeterminado'];
+  tx=ml+20;
+  perOpts.forEach(p=>{checkRow(p,data.periodo&&data.periodo.includes(p),tx,y+3);tx+=28;});
+  if(data.periodoEspecifico){
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...DARK);
+    doc.text('Período específico: '+data.periodoEspecifico,ml+90,y+3);
+  }
+  y+=10;
+
+  // ─ RECOLECCIÓN ─
+  checkPage(30);
+  y=sectionHeader('RECOLECCIÓN SUPERFICIAL ARQUEOLÓGICA',y)+3;
+  doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+  doc.text('Tipo de recolección:',ml,y+3);
+  checkRow('Decapado (5 cm)',data.tipoRecoleccion==='Decapado (5 cm)',ml+35,y+3);
+  checkRow('Barrido',data.tipoRecoleccion==='Barrido',ml+70,y+3);
+  y+=8;
+  doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+  doc.text('DIMENSIONES DE LA UNIDAD:',ml,y+3);
+  const dw=cw/3;
+  ['m largo','m ancho','Área m²'].forEach((lbl,i)=>{
+    box(ml+dw*i,y+5,dw,7);
+    doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(80,80,80);
+    doc.text(lbl,ml+dw*i+1,y+8);
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);
+    const vals=[data.largo,data.ancho,data.area];
+    doc.text(vals[i]||'',ml+dw*i+1,y+11.5);
+  });
+  y+=16;
+
+  // ─ MATERIALES ─
+  checkPage(60);
+  y=sectionHeader('MATERIAL ARQUEOLÓGICO RECOLECTADO',y)+2;
+  const colW=[38,20,cw-58];
+  ['TIPOLOGÍA','CANTIDAD','DESCRIPCIÓN GENERAL'].forEach((h,i)=>{
+    doc.setFillColor(...GREEN);
+    doc.rect(ml+(i===0?0:i===1?colW[0]:colW[0]+colW[1]),y,colW[i],6,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(7);
+    doc.text(h,ml+(i===0?1:i===1?colW[0]+1:colW[0]+colW[1]+1),y+4.2);
+  });
+  y+=6;
+  MATERIALES.forEach((m,idx)=>{
+    const mat=data.materiales&&data.materiales[m]||{qty:'',desc:''};
+    const hasData=mat.qty||mat.desc;
+    checkPage(7);
+    const fill=idx%2===0?[255,255,255]:[245,250,243];
+    box(ml,y,colW[0],6,fill);
+    box(ml+colW[0],y,colW[1],6,fill);
+    box(ml+colW[0]+colW[1],y,colW[2],6,fill);
+    doc.setTextColor(...DARK);doc.setFont('helvetica',hasData?'bold':'normal');doc.setFontSize(7.5);
+    doc.text(m,ml+1,y+4.2);
+    doc.setFont('helvetica','normal');
+    doc.text(mat.qty||'',ml+colW[0]+2,y+4.2);
+    const dlines=doc.splitTextToSize(mat.desc||'',colW[2]-2);
+    doc.text(dlines[0]||'',ml+colW[0]+colW[1]+1,y+4.2);
+    y+=6;
+  });
+  y+=4;
+
+  // ─ DIAGNÓSTICOS ─
+  checkPage(25);
+  y=sectionHeader('DESCRIPCIÓN EN DETALLE DE MATERIALES DIAGNÓSTICOS',y)+3;
+  box(ml,y,cw,25);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...DARK);
+  const diagLines=doc.splitTextToSize(data.diagnosticos||'',cw-4);
+  doc.text(diagLines,ml+2,y+5);
+  y+=29;
+
+  // ─ EMPLAZAMIENTO ─
+  checkPage(25);
+  y=sectionHeader('EMPLAZAMIENTO DE LA UNIDAD',y)+3;
+  doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+  doc.text('Emplazamiento:',ml,y+3);
+  const empOpts=['Llanura','Lomaje','Ladera','Quebrada','Cerro','Terraza fluvial'];
+  tx=ml+30;
+  empOpts.forEach(e=>{
+    checkRow(e,data.emplazamiento&&data.emplazamiento.includes(e),tx,y+3);
+    tx+=26;
+  });
+  if(data.emplazamientoOtro){y+=6;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...DARK);doc.text('Otro: '+data.emplazamientoOtro,ml,y+3);}
+  y+=8;
+  box(ml,y,cw,18);
+  doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(80,80,80);doc.text('Descripción general del emplazamiento:',ml+1,y+3);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...DARK);
+  const empLines=doc.splitTextToSize(data.emplazamientoDesc||'',cw-4);
+  doc.text(empLines,ml+2,y+8);
+  y+=22;
+
+  // ─ CONSERVACIÓN ─
+  checkPage(25);
+  y=sectionHeader('ESTADO DE CONSERVACIÓN',y)+3;
+  doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+  doc.text('Estado general:',ml,y+3);
+  checkRow('Bueno',data.conservacion==='Bueno',ml+30,y+3);
+  checkRow('Regular',data.conservacion==='Regular',ml+55,y+3);
+  checkRow('Malo',data.conservacion==='Malo',ml+80,y+3);
+  y+=8;
+  box(ml,y,cw,18);
+  doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(80,80,80);doc.text('Descripción:',ml+1,y+3);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...DARK);
+  const consLines=doc.splitTextToSize(data.conservacionDesc||'',cw-4);
+  doc.text(consLines,ml+2,y+8);
+  y+=22;
+
+  // ─ RESPONSABLES ─
+  checkPage(20);
+  y=sectionHeader('RESPONSABLES',y)+3;
+  box(ml,y,cw/2,7);box(ml+cw/2,y,cw/4,7);box(ml+cw*3/4,y,cw/4,7);
+  doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(80,80,80);
+  doc.text('RESPONSABLE DE UNIDAD',ml+1,y+3);doc.text('FECHA',ml+cw/2+1,y+3);doc.text('CAMPAÑA',ml+cw*3/4+1,y+3);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...DARK);
+  doc.text(data.responsable||'',ml+1,y+6.5);
+  doc.text(data.fecha||'',ml+cw/2+1,y+6.5);
+  doc.text(data.campana||'',ml+cw*3/4+1,y+6.5);
+  y+=7;
+  box(ml,y,cw,7);
+  doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(80,80,80);doc.text('AYUDANTE/ES DE UNIDAD',ml+1,y+3);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...DARK);
+  doc.text(data.ayudantes||'',ml+1,y+6.5);
+  y+=10;
+
+  // ─ OBSERVACIONES ─
+  if(data.observaciones){
+    checkPage(20);
+    y=sectionHeader('OBSERVACIONES',y)+3;
+    box(ml,y,cw,18);
+    const obsLines=doc.splitTextToSize(data.observaciones||'',cw-4);
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...DARK);
+    doc.text(obsLines,ml+2,y+5);
+    y+=22;
+  }
+
+  // ─ CROQUIS / FOTOS ─
+  if(data.photos&&data.photos.length){
+    checkPage(10);
+    y=sectionHeader('REGISTRO FOTOGRÁFICO / CROQUIS',y)+4;
+    const maxPerRow=2, imgW=(cw-6)/maxPerRow, imgH=60;
+    for(let i=0;i<data.photos.length;i++){
+      if(i%maxPerRow===0){
+        if(i>0)y+=imgH+5;
+        checkPage(imgH+10);
+      }
+      const x=ml+(i%maxPerRow)*(imgW+3);
+      try{
+        doc.addImage(data.photos[i],'JPEG',x,y,imgW,imgH,'','MEDIUM');
+      }catch(e){
+        box(x,y,imgW,imgH,[240,240,240]);
+        doc.setTextColor(150,150,150);doc.setFontSize(8);
+        doc.text('Foto '+(i+1),x+imgW/2-5,y+imgH/2);
+      }
+    }
+    y+=imgH+8;
+  }
+
+  // ─ FOOTER ─
+  const totalPages=doc.internal.getNumberOfPages();
+  for(let p=1;p<=totalPages;p++){
+    doc.setPage(p);
+    doc.setDrawColor(...GREEN);
+    doc.setLineWidth(0.5);
+    doc.line(ml,ph-12,pw-mr,ph-12);
+    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100,100,100);
+    doc.text('Ambiental y Sectorial  |  Ficha de Recolección Superficial  |  '+data.proyecto,ml,ph-8);
+    doc.text('Página '+p+' de '+totalPages,pw-mr-20,ph-8);
+  }
+
+  const fname='Ficha_RS_'+(data.nombreSitio||'sin_nombre').replace(/\s+/g,'_')+'_'+data.fecha+'.pdf';
+  doc.save(fname);
+  showToast('📄 PDF exportado: '+fname);
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ─── START ────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

@@ -10,7 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--gd:#2d6a1f;--gm:#3a7d2c;--gl:#7ab648;--gp:#e8f5e2;--text:#222;--white:#fff}
+:root{--gd:#2d6a1f;--gm:#3a7d2c;--gl:#7ab648;--gp:#e8f5e2;--text:#222}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4ee;color:var(--text);min-height:100vh}
 .app-header{background:var(--gd);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .logo-box{background:var(--gm);border-radius:10px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0}
@@ -21,7 +21,7 @@ nav button{flex:1;min-width:60px;padding:11px 6px;border:none;background:none;co
 nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 .screen{display:none;padding:16px;max-width:600px;margin:0 auto;padding-bottom:40px}
 .screen.active{display:block}
-.ficha-card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.1);cursor:pointer;border-left:4px solid var(--gl);touch-action:manipulation}
+.ficha-card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.1);cursor:pointer;border-left:4px solid var(--gl)}
 .ficha-card h3{font-size:14px;color:var(--gd);margin-bottom:4px}
 .ficha-card p{font-size:12px;color:#666}
 .badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
@@ -30,9 +30,8 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 .btn-primary{background:var(--gm);color:#fff}
 .btn-danger{background:#c0392b;color:#fff}
 .btn-outline{background:#fff;color:var(--gd);border:2px solid var(--gm)}
-.btn-warn{background:#e67e22;color:#fff}
 .btn-sm{padding:7px 12px;font-size:12px}
-.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn:disabled{opacity:.5}
 .sec{background:var(--gm);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;margin:16px 0 10px;text-transform:uppercase;letter-spacing:.5px}
 .field{margin-bottom:12px}
 .field label{display:block;font-size:12px;font-weight:600;color:var(--gd);margin-bottom:4px}
@@ -41,10 +40,13 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 .field textarea{min-height:80px;resize:vertical}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-.row4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
-.chk-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
-.chk-item{display:flex;align-items:center;gap:5px;background:var(--gp);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px;touch-action:manipulation}
-.chk-item input{accent-color:var(--gm);width:15px;height:15px}
+
+/* TICKET BUTTONS */
+.chk-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chk-btn{display:inline-flex;align-items:center;padding:10px 16px;border-radius:20px;border:2px solid #ccc;background:#fff;color:#666;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;transition:all .15s;min-height:44px}
+.chk-btn.on{background:var(--gm);border-color:var(--gm);color:#fff}
+.chk-btn.radio-btn{border-radius:20px}
+
 .mat-table{width:100%;border-collapse:collapse;font-size:13px}
 .mat-table th{background:var(--gm);color:#fff;padding:7px 8px;text-align:left;font-size:11px}
 .mat-table td{padding:5px 6px;border-bottom:1px solid #eee}
@@ -56,7 +58,7 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 .photos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 .photo-thumb{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:#eee}
 .photo-thumb img{width:100%;height:100%;object-fit:cover}
-.del-photo{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.del-photo{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:14px;cursor:pointer}
 .add-photo-btn{aspect-ratio:1;border:2px dashed var(--gl);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--gm);font-size:12px;gap:4px;background:#fff;touch-action:manipulation}
 .form-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
 .empty{text-align:center;padding:40px 20px;color:#888}
@@ -72,30 +74,24 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 .info-box{background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 12px;font-size:12px;color:#856404;margin-bottom:12px}
 .search-bar{display:flex;gap:8px;margin-bottom:12px}
 .search-bar input{flex:1;padding:9px 12px;border:1.5px solid #ccc;border-radius:8px;font-size:14px}
-.search-bar input:focus{outline:none;border-color:var(--gm)}
-/* Canvas croquis */
-.canvas-wrap{position:relative;border:2px solid var(--gl);border-radius:10px;background:#fff;margin-top:8px;touch-action:none}
+.canvas-wrap{border:2px solid var(--gl);border-radius:10px;background:#fff;margin-top:8px;touch-action:none}
 #croquis-canvas{display:block;width:100%;border-radius:8px}
 .canvas-tools{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
 .canvas-tools button{padding:6px 10px;border-radius:6px;border:1.5px solid #ccc;background:#fff;font-size:12px;cursor:pointer;touch-action:manipulation}
 .canvas-tools button.active{background:var(--gm);color:#fff;border-color:var(--gm)}
 .canvas-tools input[type=color]{width:36px;height:30px;border:1.5px solid #ccc;border-radius:6px;cursor:pointer;padding:2px}
-/* Vertices */
-.vtx-row{display:grid;grid-template-columns:auto 1fr 1fr 1fr auto;gap:6px;align-items:center;margin-bottom:6px;font-size:12px}
+.vtx-row{display:grid;grid-template-columns:24px 1fr 1fr 1fr 32px;gap:6px;align-items:center;margin-bottom:6px;font-size:12px}
 .vtx-row span{font-weight:700;color:var(--gd);text-align:center}
 .vtx-row input{padding:6px 8px;border:1.5px solid #ccc;border-radius:6px;font-size:12px;width:100%}
-.vtx-row button{padding:4px 8px;border:none;background:#c0392b;color:#fff;border-radius:6px;cursor:pointer;font-size:12px;touch-action:manipulation}
-.vtx-header{display:grid;grid-template-columns:auto 1fr 1fr 1fr auto;gap:6px;font-size:11px;font-weight:700;color:#888;margin-bottom:4px}
+.vtx-row button{padding:4px;border:none;background:#c0392b;color:#fff;border-radius:6px;cursor:pointer;font-size:12px;touch-action:manipulation}
+.vtx-header{display:grid;grid-template-columns:24px 1fr 1fr 1fr 32px;gap:6px;font-size:11px;font-weight:700;color:#888;margin-bottom:4px;padding:0 2px}
 </style>
 </head>
 <body>
 
 <div class="app-header">
   <div class="logo-box">as</div>
-  <div>
-    <h1>Fichas Arqueológicas</h1>
-    <p>Ambiental y Sectorial</p>
-  </div>
+  <div><h1>Fichas Arqueológicas</h1><p>Ambiental y Sectorial</p></div>
 </div>
 
 <nav>
@@ -114,7 +110,7 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
   <div class="search-bar">
     <input type="text" id="search-input" placeholder="🔍 Buscar por nombre, proyecto, fecha..." oninput="renderFichas()">
     <select id="filter-region" onchange="renderFichas()" style="padding:9px 8px;border:1.5px solid #ccc;border-radius:8px;font-size:13px;background:#fff">
-      <option value="">Todas las regiones</option>
+      <option value="">Todas</option>
     </select>
   </div>
   <div id="fichas-list"></div>
@@ -124,7 +120,7 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 <div id="screen-form" class="screen">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
     <h2 style="font-size:15px;color:var(--gd)" id="form-title">Nueva Ficha</h2>
-    <div style="display:flex;gap:6px">
+    <div style="display:flex;gap:6px;align-items:center">
       <span id="ficha-id-badge" style="background:var(--gp);color:var(--gd);padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700"></span>
       <button class="btn btn-sm btn-outline" onclick="nuevaFicha()">🔄 Limpiar</button>
     </div>
@@ -135,21 +131,9 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
   <div class="field"><label>Nombre Unidad</label><input type="text" id="f-unidad" placeholder="Ej: Unidad 1"></div>
   <div class="field"><label>Proyecto</label><input type="text" id="f-proyecto" placeholder="Ej: PFV Pauna Solar"></div>
   <div class="row3">
-    <div class="field"><label>Región</label>
-      <select id="f-region" onchange="updateProvincias()">
-        <option value="">Seleccionar...</option>
-      </select>
-    </div>
-    <div class="field"><label>Provincia</label>
-      <select id="f-provincia" onchange="updateComunas()">
-        <option value="">Seleccionar...</option>
-      </select>
-    </div>
-    <div class="field"><label>Comuna</label>
-      <select id="f-comuna">
-        <option value="">Seleccionar...</option>
-      </select>
-    </div>
+    <div class="field"><label>Región</label><select id="f-region" onchange="updateProvincias()"><option value="">Seleccionar...</option></select></div>
+    <div class="field"><label>Provincia</label><select id="f-provincia" onchange="updateComunas()"><option value="">Seleccionar...</option></select></div>
+    <div class="field"><label>Comuna</label><select id="f-comuna"><option value="">Seleccionar...</option></select></div>
   </div>
 
   <div class="sec">📍 Coordenadas GPS (WGS84)</div>
@@ -177,31 +161,34 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 
   <div class="sec">🏛 Características del Sitio</div>
   <div class="field"><label>Tipo</label><input type="text" id="f-tipo" placeholder="Ej: Estructura tipo plataforma"></div>
-  <div class="field"><label>Tipología Funcional</label>
+  <div class="field">
+    <label>Tipología Funcional</label>
     <div class="chk-group" id="grp-tipologia">
-      <label class="chk-item"><input type="checkbox" value="Doméstico/habitacional"> Doméstico/habitacional</label>
-      <label class="chk-item"><input type="checkbox" value="Productivo"> Productivo</label>
-      <label class="chk-item"><input type="checkbox" value="Tránsito"> Tránsito</label>
-      <label class="chk-item"><input type="checkbox" value="Ritual"> Ritual</label>
-      <label class="chk-item"><input type="checkbox" value="Entierro"> Entierro</label>
-      <label class="chk-item"><input type="checkbox" value="Indeterminado"> Indeterminado</label>
+      <button type="button" class="chk-btn" data-group="tipologia" data-value="Doméstico/habitacional">Doméstico/habitacional</button>
+      <button type="button" class="chk-btn" data-group="tipologia" data-value="Productivo">Productivo</button>
+      <button type="button" class="chk-btn" data-group="tipologia" data-value="Tránsito">Tránsito</button>
+      <button type="button" class="chk-btn" data-group="tipologia" data-value="Ritual">Ritual</button>
+      <button type="button" class="chk-btn" data-group="tipologia" data-value="Entierro">Entierro</button>
+      <button type="button" class="chk-btn" data-group="tipologia" data-value="Indeterminado">Indeterminado</button>
     </div>
-    <input type="text" id="f-tipologia-otro" placeholder="Otro (especificar)" style="margin-top:6px">
+    <input type="text" id="f-tipologia-otro" placeholder="Otro (especificar)" style="margin-top:8px">
   </div>
-  <div class="field"><label>Período</label>
+  <div class="field">
+    <label>Período</label>
     <div class="chk-group" id="grp-periodo">
-      <label class="chk-item"><input type="checkbox" value="Prehispánico"> Prehispánico</label>
-      <label class="chk-item"><input type="checkbox" value="Histórico"> Histórico</label>
-      <label class="chk-item"><input type="checkbox" value="Indeterminado"> Indeterminado</label>
+      <button type="button" class="chk-btn" data-group="periodo" data-value="Prehispánico">Prehispánico</button>
+      <button type="button" class="chk-btn" data-group="periodo" data-value="Histórico">Histórico</button>
+      <button type="button" class="chk-btn" data-group="periodo" data-value="Indeterminado">Indeterminado</button>
     </div>
-    <input type="text" id="f-periodo-esp" placeholder="Período específico (si aplica)" style="margin-top:6px">
+    <input type="text" id="f-periodo-esp" placeholder="Período específico (si aplica)" style="margin-top:8px">
   </div>
 
   <div class="sec">🔍 Recolección Superficial</div>
-  <div class="field"><label>Tipo de recolección</label>
-    <div class="chk-group">
-      <label class="chk-item"><input type="radio" name="recoleccion" value="Decapado (5 cm)"> Decapado (5 cm)</label>
-      <label class="chk-item"><input type="radio" name="recoleccion" value="Barrido"> Barrido</label>
+  <div class="field">
+    <label>Tipo de recolección</label>
+    <div class="chk-group" id="grp-recoleccion">
+      <button type="button" class="chk-btn radio-btn" data-group="recoleccion" data-radio="true" data-value="Decapado (5 cm)">Decapado (5 cm)</button>
+      <button type="button" class="chk-btn radio-btn" data-group="recoleccion" data-radio="true" data-value="Barrido">Barrido</button>
     </div>
   </div>
   <div class="row3">
@@ -220,32 +207,30 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
   <div class="field"><textarea id="f-diagnosticos" placeholder="Descripción detallada de materiales diagnósticos..."></textarea></div>
 
   <div class="sec">🌄 Emplazamiento</div>
-  <div class="field"><label>Tipo de emplazamiento</label>
+  <div class="field">
+    <label>Tipo de emplazamiento</label>
     <div class="chk-group" id="grp-emplazamiento">
-      <label class="chk-item"><input type="checkbox" value="Llanura"> Llanura</label>
-      <label class="chk-item"><input type="checkbox" value="Lomaje"> Lomaje</label>
-      <label class="chk-item"><input type="checkbox" value="Ladera"> Ladera</label>
-      <label class="chk-item"><input type="checkbox" value="Quebrada"> Quebrada</label>
-      <label class="chk-item"><input type="checkbox" value="Cerro"> Cerro</label>
-      <label class="chk-item"><input type="checkbox" value="Terraza fluvial"> Terraza fluvial</label>
+      <button type="button" class="chk-btn" data-group="emplazamiento" data-value="Llanura">Llanura</button>
+      <button type="button" class="chk-btn" data-group="emplazamiento" data-value="Lomaje">Lomaje</button>
+      <button type="button" class="chk-btn" data-group="emplazamiento" data-value="Ladera">Ladera</button>
+      <button type="button" class="chk-btn" data-group="emplazamiento" data-value="Quebrada">Quebrada</button>
+      <button type="button" class="chk-btn" data-group="emplazamiento" data-value="Cerro">Cerro</button>
+      <button type="button" class="chk-btn" data-group="emplazamiento" data-value="Terraza fluvial">Terraza fluvial</button>
     </div>
-    <input type="text" id="f-empl-otro" placeholder="Otro (especificar)" style="margin-top:6px">
+    <input type="text" id="f-empl-otro" placeholder="Otro (especificar)" style="margin-top:8px">
   </div>
-  <div class="field"><label>Descripción general del emplazamiento</label>
-    <textarea id="f-empl-desc" placeholder="Describir el emplazamiento..."></textarea>
-  </div>
+  <div class="field"><label>Descripción general del emplazamiento</label><textarea id="f-empl-desc" placeholder="Describir el emplazamiento..."></textarea></div>
 
   <div class="sec">📊 Estado de Conservación</div>
-  <div class="field"><label>Estado general</label>
-    <div class="chk-group">
-      <label class="chk-item"><input type="radio" name="conservacion" value="Bueno"> Bueno</label>
-      <label class="chk-item"><input type="radio" name="conservacion" value="Regular"> Regular</label>
-      <label class="chk-item"><input type="radio" name="conservacion" value="Malo"> Malo</label>
+  <div class="field">
+    <label>Estado general</label>
+    <div class="chk-group" id="grp-conservacion">
+      <button type="button" class="chk-btn radio-btn" data-group="conservacion" data-radio="true" data-value="Bueno">✅ Bueno</button>
+      <button type="button" class="chk-btn radio-btn" data-group="conservacion" data-radio="true" data-value="Regular">⚠️ Regular</button>
+      <button type="button" class="chk-btn radio-btn" data-group="conservacion" data-radio="true" data-value="Malo">❌ Malo</button>
     </div>
   </div>
-  <div class="field"><label>Descripción estado de conservación</label>
-    <textarea id="f-cons-desc" placeholder="Describir estado de conservación..."></textarea>
-  </div>
+  <div class="field"><label>Descripción estado de conservación</label><textarea id="f-cons-desc" placeholder="Describir estado de conservación..."></textarea></div>
 
   <div class="sec">👤 Responsables</div>
   <div class="field"><label>Responsable de unidad</label><input type="text" id="f-responsable" placeholder="Nombre completo"></div>
@@ -266,16 +251,12 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
     <button id="tool-eraser" onclick="setTool('eraser')">🧹 Borrar</button>
     <input type="color" id="draw-color" value="#2d6a1f" title="Color">
     <select id="draw-size" style="padding:5px 8px;border:1.5px solid #ccc;border-radius:6px;font-size:12px">
-      <option value="2">Fino</option>
-      <option value="4" selected>Normal</option>
-      <option value="8">Grueso</option>
+      <option value="2">Fino</option><option value="4" selected>Normal</option><option value="8">Grueso</option>
     </select>
     <button onclick="clearCanvas()" style="margin-left:auto;color:#c0392b;border-color:#c0392b">🗑 Limpiar</button>
   </div>
-  <div class="canvas-wrap">
-    <canvas id="croquis-canvas" width="800" height="400"></canvas>
-  </div>
-  <div class="info-box" style="margin-top:8px">💡 Dibuja el croquis directamente con el dedo o lápiz táctil. También puedes agregar fotos del croquis en la sección de fotografías.</div>
+  <div class="canvas-wrap"><canvas id="croquis-canvas" width="800" height="400"></canvas></div>
+  <div class="info-box" style="margin-top:8px">💡 Dibuja el croquis con el dedo o lápiz táctil.</div>
 
   <div class="sec">📝 Observaciones</div>
   <div class="field"><textarea id="f-obs" placeholder="Observaciones adicionales..."></textarea></div>
@@ -292,20 +273,20 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
   <div class="sec">🔄 Respaldo y Sincronización</div>
   <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.08)">
     <h3 style="font-size:14px;color:var(--gd);margin-bottom:8px">📤 Exportar respaldo ZIP</h3>
-    <p style="font-size:13px;color:#666;margin-bottom:12px">Descarga todas las fichas con sus fotos en un archivo ZIP. Compártelo por WhatsApp, email o Drive.</p>
+    <p style="font-size:13px;color:#666;margin-bottom:12px">Descarga todas las fichas con sus fotos y croquis. Compártelo por WhatsApp, email o Drive.</p>
     <button class="btn btn-primary" onclick="exportZIP()">⬇️ Descargar ZIP</button>
   </div>
   <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.08)">
     <h3 style="font-size:14px;color:var(--gd);margin-bottom:8px">📥 Importar respaldo ZIP</h3>
-    <p style="font-size:13px;color:#666;margin-bottom:12px">Carga un ZIP de respaldo para sincronizar fichas entre dispositivos del equipo.</p>
+    <p style="font-size:13px;color:#666;margin-bottom:12px">Carga un ZIP para sincronizar fichas entre dispositivos del equipo.</p>
     <input type="file" id="zip-input" accept=".zip" style="display:none" onchange="importZIP(event)">
     <button class="btn btn-outline" onclick="document.getElementById('zip-input').click()">⬆️ Cargar ZIP</button>
   </div>
-  <div style="background:#e8f5e2;border-radius:12px;padding:16px;font-size:13px;color:var(--gd)">
-    <b>💡 Flujo recomendado para sincronizar equipo:</b><br><br>
-    1. Arqueólogo A exporta ZIP y lo comparte por WhatsApp/Drive<br>
-    2. Arqueólogo B importa el ZIP en su dispositivo<br>
-    3. Las fichas se combinan (no se duplican)<br>
+  <div style="background:var(--gp);border-radius:12px;padding:16px;font-size:13px;color:var(--gd)">
+    <b>💡 Flujo para sincronizar equipo:</b><br><br>
+    1. Arqueólogo A exporta ZIP y lo comparte<br>
+    2. Arqueólogo B importa el ZIP<br>
+    3. Las fichas se combinan sin duplicar<br>
     4. Cada uno puede seguir agregando fichas nuevas
   </div>
 </div>
@@ -322,12 +303,11 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
     Android: Chrome → Menú → "Agregar a pantalla de inicio"
   </div>
   <div style="margin-top:10px;padding:12px;background:var(--gp);border-radius:10px;font-size:12px;color:var(--gd)">
-    <b>Fichas guardadas:</b> <span id="cfg-count"></span><br>
-    <b>Versión:</b> 2.0
+    <b>Fichas guardadas:</b> <span id="cfg-count"></span> &nbsp;|&nbsp; <b>Versión:</b> 3.0
   </div>
 </div>
 
-<!-- MODAL DELETE -->
+<!-- MODALS -->
 <div class="modal-overlay" id="modal-del">
   <div class="modal">
     <h3>⚠️ Eliminar ficha</h3>
@@ -338,8 +318,6 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
     </div>
   </div>
 </div>
-
-<!-- MODAL IMPORT -->
 <div class="modal-overlay" id="modal-import">
   <div class="modal">
     <h3>📥 Importar fichas</h3>
@@ -354,208 +332,185 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── DATOS CHILE ──────────────────────────────────────────────────────
-var CHILE = {
-  "Arica y Parinacota":{"Arica":["Arica","Camarones"],"Parinacota":["Putre","General Lagos"]},
-  "Tarapacá":{"Tarapacá":["Iquique","Alto Hospicio"],"El Tamarugal":["Pozo Almonte","Camiña","Colchane","Huara","Pica"]},
-  "Antofagasta":{"Antofagasta":["Antofagasta","Mejillones","Sierra Gorda","Taltal"],"El Loa":["Calama","Ollagüe","San Pedro de Atacama"],"Tocopilla":["Tocopilla","María Elena"]},
-  "Atacama":{"Copiapó":["Copiapó","Caldera","Tierra Amarilla"],"Chañaral":["Chañaral","Diego de Almagro"],"Huasco":["Vallenar","Alto del Carmen","Freirina","Huasco"]},
-  "Coquimbo":{"Elqui":["La Serena","Coquimbo","Andacollo","La Higuera","Paiguano","Vicuña"],"Choapa":["Illapel","Canela","Los Vilos","Salamanca"],"Limarí":["Ovalle","Combarbalá","Monte Patria","Punitaqui","Río Hurtado"]},
-  "Valparaíso":{"Valparaíso":["Valparaíso","Casablanca","Concón","Juan Fernández","Puchuncaví","Quintero","Viña del Mar"],"Isla de Pascua":["Isla de Pascua"],"Los Andes":["Los Andes","Calle Larga","Rinconada","San Esteban"],"Petorca":["La Ligua","Cabildo","Papudo","Petorca","Zapallar"],"Quillota":["Quillota","Calera","Hijuelas","La Cruz","Nogales"],"San Antonio":["San Antonio","Algarrobo","Cartagena","El Quisco","El Tabo","Santo Domingo"],"San Felipe de Aconcagua":["San Felipe","Catemu","Llaillay","Panquehue","Putaendo","Santa María"],"Marga Marga":["Quilpué","Limache","Olmué","Villa Alemana"]},
-  "Metropolitana":{"Santiago":["Santiago","Cerrillos","Cerro Navia","Conchalí","El Bosque","Estación Central","Huechuraba","Independencia","La Cisterna","La Florida","La Granja","La Pintana","La Reina","Las Condes","Lo Barnechea","Lo Espejo","Lo Prado","Macul","Maipú","Ñuñoa","Pedro Aguirre Cerda","Peñalolén","Providencia","Pudahuel","Quilicura","Quinta Normal","Recoleta","Renca","San Joaquín","San Miguel","San Ramón","Vitacura"],"Cordillera":["Puente Alto","Pirque","San José de Maipo"],"Chacabuco":["Colina","Lampa","Til Til"],"Maipo":["San Bernardo","Buin","Calera de Tango","Paine"],"Melipilla":["Melipilla","Alhué","Curacaví","María Pinto","San Pedro"],"Talagante":["Talagante","El Monte","Isla de Maipo","Padre Hurtado","Peñaflor"]},
-  "O'Higgins":{"Cachapoal":["Rancagua","Codegua","Coinco","Coltauco","Doñihue","Graneros","Las Cabras","Machalí","Malloa","Mostazal","Olivar","Peumo","Pichidegua","Quinta de Tilcoco","Rengo","Requínoa","San Vicente"],"Cardenal Caro":["Pichilemu","La Estrella","Litueche","Marchigüe","Navidad","Paredones"],"Colchagua":["San Fernando","Chépica","Chimbarongo","Lolol","Nancagua","Palmilla","Peralillo","Placilla","Pumanque","Santa Cruz"]},
-  "Maule":{"Talca":["Talca","Constitución","Curepto","Empedrado","Maule","Pelarco","Pencahue","Río Claro","San Clemente","San Rafael"],"Cauquenes":["Cauquenes","Chanco","Pelluhue"],"Curicó":["Curicó","Hualañé","Licantén","Molina","Rauco","Romeral","Sagrada Familia","Teno","Vichuquén"],"Linares":["Linares","Colbún","Longaví","Parral","Retiro","San Javier","Villa Alegre","Yerbas Buenas"]},
-  "Ñuble":{"Diguillín":["Chillán","Bulnes","Chillán Viejo","El Carmen","Pemuco","Pinto","Quillón","San Ignacio","Yungay"],"Itata":["Quirihue","Cobquecura","Coelemu","Ninhue","Portezuelo","Ránquil","Treguaco"],"Punilla":["San Carlos","Coihueco","Ñiquén","San Fabián","San Nicolás"]},
-  "Biobío":{"Concepción":["Concepción","Coronel","Chiguayante","Florida","Hualqui","Lota","Penco","San Pedro de la Paz","Santa Juana","Talcahuano","Tomé","Hualpén"],"Arauco":["Lebu","Arauco","Cañete","Contulmo","Curanilahue","Los Álamos","Tirúa"],"Biobío":["Los Ángeles","Antuco","Cabrero","Laja","Mulchén","Nacimiento","Negrete","Quilaco","Quilleco","San Rosendo","Santa Bárbara","Tucapel","Yumbel"]},
-  "La Araucanía":{"Cautín":["Temuco","Carahue","Cunco","Curarrehue","Freire","Galvarino","Gorbea","Lautaro","Loncoche","Melipeuco","Nueva Imperial","Padre las Casas","Perquenco","Pitrufquén","Pucón","Saavedra","Teodoro Schmidt","Toltén","Vilcún","Villarrica","Cholchol"],"Malleco":["Angol","Collipulli","Curacautín","Ercilla","Lonquimay","Los Sauces","Lumaco","Purén","Renaico","Traiguén","Victoria"]},
-  "Los Ríos":{"Valdivia":["Valdivia","Corral","Futrono","La Unión","Lago Ranco","Lanco","Los Lagos","Máfil","Mariquina","Paillaco","Panguipulli","Río Bueno"],"Ranco":["La Unión","Futrono","Lago Ranco","Río Bueno"]},
-  "Los Lagos":{"Llanquihue":["Puerto Montt","Calbuco","Cochamó","Fresia","Frutillar","Los Muermos","Llanquihue","Maullín","Puerto Varas"],"Chiloé":["Castro","Ancud","Chonchi","Curaco de Vélez","Dalcahue","Puqueldón","Queilén","Quellón","Quemchi","Quinchao"],"Osorno":["Osorno","Puerto Octay","Purranque","Puyehue","Río Negro","San Juan de la Costa","San Pablo"],"Palena":["Chaitén","Futaleufú","Hualaihué","Palena"]},
-  "Aysén":{"Coyhaique":["Coyhaique","Lago Verde"],"Aysén":["Aysén","Cisnes","Guaitecas"],"Capitán Prat":["Cochrane","O'Higgins","Tortel"],"General Carrera":["Chile Chico","Río Ibáñez"]},
-  "Magallanes":{"Magallanes":["Punta Arenas","Laguna Blanca","Río Verde","San Gregorio"],"Antártica Chilena":["Cabo de Hornos","Antártica"],"Tierra del Fuego":["Porvenir","Primavera","Timaukel"],"Última Esperanza":["Natales","Torres del Paine"]}
-};
+var CHILE = {"Arica y Parinacota":{"Arica":["Arica","Camarones"],"Parinacota":["Putre","General Lagos"]},"Tarapacá":{"Tarapacá":["Iquique","Alto Hospicio"],"El Tamarugal":["Pozo Almonte","Camiña","Colchane","Huara","Pica"]},"Antofagasta":{"Antofagasta":["Antofagasta","Mejillones","Sierra Gorda","Taltal"],"El Loa":["Calama","Ollagüe","San Pedro de Atacama"],"Tocopilla":["Tocopilla","María Elena"]},"Atacama":{"Copiapó":["Copiapó","Caldera","Tierra Amarilla"],"Chañaral":["Chañaral","Diego de Almagro"],"Huasco":["Vallenar","Alto del Carmen","Freirina","Huasco"]},"Coquimbo":{"Elqui":["La Serena","Coquimbo","Andacollo","La Higuera","Paiguano","Vicuña"],"Choapa":["Illapel","Canela","Los Vilos","Salamanca"],"Limarí":["Ovalle","Combarbalá","Monte Patria","Punitaqui","Río Hurtado"]},"Valparaíso":{"Valparaíso":["Valparaíso","Casablanca","Concón","Juan Fernández","Puchuncaví","Quintero","Viña del Mar"],"Isla de Pascua":["Isla de Pascua"],"Los Andes":["Los Andes","Calle Larga","Rinconada","San Esteban"],"Petorca":["La Ligua","Cabildo","Papudo","Petorca","Zapallar"],"Quillota":["Quillota","Calera","Hijuelas","La Cruz","Nogales"],"San Antonio":["San Antonio","Algarrobo","Cartagena","El Quisco","El Tabo","Santo Domingo"],"San Felipe de Aconcagua":["San Felipe","Catemu","Llaillay","Panquehue","Putaendo","Santa María"],"Marga Marga":["Quilpué","Limache","Olmué","Villa Alemana"]},"Metropolitana":{"Santiago":["Santiago","Cerrillos","Cerro Navia","Conchalí","El Bosque","Estación Central","Huechuraba","Independencia","La Cisterna","La Florida","La Granja","La Pintana","La Reina","Las Condes","Lo Barnechea","Lo Espejo","Lo Prado","Macul","Maipú","Ñuñoa","Pedro Aguirre Cerda","Peñalolén","Providencia","Pudahuel","Quilicura","Quinta Normal","Recoleta","Renca","San Joaquín","San Miguel","San Ramón","Vitacura"],"Cordillera":["Puente Alto","Pirque","San José de Maipo"],"Chacabuco":["Colina","Lampa","Til Til"],"Maipo":["San Bernardo","Buin","Calera de Tango","Paine"],"Melipilla":["Melipilla","Alhué","Curacaví","María Pinto","San Pedro"],"Talagante":["Talagante","El Monte","Isla de Maipo","Padre Hurtado","Peñaflor"]},"O'Higgins":{"Cachapoal":["Rancagua","Codegua","Coinco","Coltauco","Doñihue","Graneros","Las Cabras","Machalí","Malloa","Mostazal","Olivar","Peumo","Pichidegua","Quinta de Tilcoco","Rengo","Requínoa","San Vicente"],"Cardenal Caro":["Pichilemu","La Estrella","Litueche","Marchigüe","Navidad","Paredones"],"Colchagua":["San Fernando","Chépica","Chimbarongo","Lolol","Nancagua","Palmilla","Peralillo","Placilla","Pumanque","Santa Cruz"]},"Maule":{"Talca":["Talca","Constitución","Curepto","Empedrado","Maule","Pelarco","Pencahue","Río Claro","San Clemente","San Rafael"],"Cauquenes":["Cauquenes","Chanco","Pelluhue"],"Curicó":["Curicó","Hualañé","Licantén","Molina","Rauco","Romeral","Sagrada Familia","Teno","Vichuquén"],"Linares":["Linares","Colbún","Longaví","Parral","Retiro","San Javier","Villa Alegre","Yerbas Buenas"]},"Ñuble":{"Diguillín":["Chillán","Bulnes","Chillán Viejo","El Carmen","Pemuco","Pinto","Quillón","San Ignacio","Yungay"],"Itata":["Quirihue","Cobquecura","Coelemu","Ninhue","Portezuelo","Ránquil","Treguaco"],"Punilla":["San Carlos","Coihueco","Ñiquén","San Fabián","San Nicolás"]},"Biobío":{"Concepción":["Concepción","Coronel","Chiguayante","Florida","Hualqui","Lota","Penco","San Pedro de la Paz","Santa Juana","Talcahuano","Tomé","Hualpén"],"Arauco":["Lebu","Arauco","Cañete","Contulmo","Curanilahue","Los Álamos","Tirúa"],"Biobío":["Los Ángeles","Antuco","Cabrero","Laja","Mulchén","Nacimiento","Negrete","Quilaco","Quilleco","San Rosendo","Santa Bárbara","Tucapel","Yumbel"]},"La Araucanía":{"Cautín":["Temuco","Carahue","Cunco","Curarrehue","Freire","Galvarino","Gorbea","Lautaro","Loncoche","Melipeuco","Nueva Imperial","Padre las Casas","Perquenco","Pitrufquén","Pucón","Saavedra","Teodoro Schmidt","Toltén","Vilcún","Villarrica","Cholchol"],"Malleco":["Angol","Collipulli","Curacautín","Ercilla","Lonquimay","Los Sauces","Lumaco","Purén","Renaico","Traiguén","Victoria"]},"Los Ríos":{"Valdivia":["Valdivia","Corral","Futrono","La Unión","Lago Ranco","Lanco","Los Lagos","Máfil","Mariquina","Paillaco","Panguipulli","Río Bueno"]},"Los Lagos":{"Llanquihue":["Puerto Montt","Calbuco","Cochamó","Fresia","Frutillar","Los Muermos","Llanquihue","Maullín","Puerto Varas"],"Chiloé":["Castro","Ancud","Chonchi","Curaco de Vélez","Dalcahue","Puqueldón","Queilén","Quellón","Quemchi","Quinchao"],"Osorno":["Osorno","Puerto Octay","Purranque","Puyehue","Río Negro","San Juan de la Costa","San Pablo"],"Palena":["Chaitén","Futaleufú","Hualaihué","Palena"]},"Aysén":{"Coyhaique":["Coyhaique","Lago Verde"],"Aysén":["Aysén","Cisnes","Guaitecas"],"Capitán Prat":["Cochrane","O'Higgins","Tortel"],"General Carrera":["Chile Chico","Río Ibáñez"]},"Magallanes":{"Magallanes":["Punta Arenas","Laguna Blanca","Río Verde","San Gregorio"],"Antártica Chilena":["Cabo de Hornos","Antártica"],"Tierra del Fuego":["Porvenir","Primavera","Timaukel"],"Última Esperanza":["Natales","Torres del Paine"]}};
 
 var MATS = ['Cerámica','Lítico','Osteofauna','Loza','Porcelana','Gres','Vidrio','Metal','Malacológico','Textil','Cuero'];
-var fichas = [];
-var currentId = null;
-var photos = [];
-var cfg = {};
-var vertices = [];
-var pendingImport = null;
-var drawTool = 'pen';
-var isDrawing = false;
-var lastX = 0, lastY = 0;
-var startX = 0, startY = 0;
-var snapshot = null;
+var fichas=[], currentId=null, photos=[], cfg={}, vertices=[], pendingImport=null;
+var drawTool='pen', isDrawing=false, lastX=0, lastY=0, startX=0, startY=0, snapshot=null;
 
-// ─── INIT ─────────────────────────────────────────────────────────────
-function init() {
-  try { fichas = JSON.parse(localStorage.getItem('fichas_ays')||'[]'); } catch(e){ fichas=[]; }
-  try { cfg = JSON.parse(localStorage.getItem('cfg_ays')||'{}'); } catch(e){ cfg={}; }
-  buildMats();
-  loadCfg();
-  populateRegiones();
-  renderFichas();
-  renderPhotos();
-  setToday();
-  initCanvas();
+function init(){
+  try{fichas=JSON.parse(localStorage.getItem('fichas_ays')||'[]');}catch(e){fichas=[];}
+  try{cfg=JSON.parse(localStorage.getItem('cfg_ays')||'{}');}catch(e){cfg={};}
+  buildMats(); loadCfg(); populateRegiones(); renderFichas(); renderPhotos(); setToday(); initCanvas(); initChkBtns();
 }
 
-function setToday() {
-  var d = new Date();
-  var s = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
-  document.getElementById('f-fecha').value = s;
-}
-function pad(n){ return String(n).padStart(2,'0'); }
+function pad(n){return String(n).padStart(2,'0');}
+function setToday(){var d=new Date();document.getElementById('f-fecha').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
 
-function loadCfg() {
-  if(cfg.proyecto) document.getElementById('cfg-proyecto').value = cfg.proyecto;
-  if(cfg.resp) document.getElementById('cfg-resp').value = cfg.resp;
-  if(cfg.campana) document.getElementById('cfg-campana').value = cfg.campana;
+function loadCfg(){
+  if(cfg.proyecto) document.getElementById('cfg-proyecto').value=cfg.proyecto;
+  if(cfg.resp) document.getElementById('cfg-resp').value=cfg.resp;
+  if(cfg.campana) document.getElementById('cfg-campana').value=cfg.campana;
 }
-
-function saveConfig() {
-  cfg.proyecto = document.getElementById('cfg-proyecto').value;
-  cfg.resp = document.getElementById('cfg-resp').value;
-  cfg.campana = document.getElementById('cfg-campana').value;
-  localStorage.setItem('cfg_ays', JSON.stringify(cfg));
+function saveConfig(){
+  cfg.proyecto=document.getElementById('cfg-proyecto').value;
+  cfg.resp=document.getElementById('cfg-resp').value;
+  cfg.campana=document.getElementById('cfg-campana').value;
+  localStorage.setItem('cfg_ays',JSON.stringify(cfg));
   showToast('Configuración guardada');
 }
 
-// ─── REGIONES / PROVINCIAS / COMUNAS ─────────────────────────────────
-function populateRegiones() {
-  var sel = document.getElementById('f-region');
-  var filt = document.getElementById('filter-region');
-  Object.keys(CHILE).forEach(function(r) {
-    var o1 = document.createElement('option'); o1.value=r; o1.textContent=r; sel.appendChild(o1);
-    var o2 = document.createElement('option'); o2.value=r; o2.textContent=r; filt.appendChild(o2);
+// ─── CHK BUTTONS ──────────────────────────────────────────────────────
+function initChkBtns(){
+  document.querySelectorAll('.chk-btn').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      e.preventDefault();
+      var isRadio=btn.getAttribute('data-radio')==='true';
+      var group=btn.getAttribute('data-group');
+      if(isRadio){
+        document.querySelectorAll('.chk-btn[data-group="'+group+'"]').forEach(function(b){ b.classList.remove('on'); });
+        btn.classList.add('on');
+      } else {
+        btn.classList.toggle('on');
+      }
+    });
   });
 }
 
-function updateProvincias() {
-  var r = document.getElementById('f-region').value;
-  var pSel = document.getElementById('f-provincia');
-  var cSel = document.getElementById('f-comuna');
-  pSel.innerHTML = '<option value="">Seleccionar...</option>';
-  cSel.innerHTML = '<option value="">Seleccionar...</option>';
-  if(!r || !CHILE[r]) return;
-  Object.keys(CHILE[r]).forEach(function(p) {
-    var o = document.createElement('option'); o.value=p; o.textContent=p; pSel.appendChild(o);
+function getChkValues(group){
+  var vals=[];
+  document.querySelectorAll('.chk-btn[data-group="'+group+'"].on').forEach(function(b){ vals.push(b.getAttribute('data-value')); });
+  return vals;
+}
+function getRadioValue(group){
+  var btn=document.querySelector('.chk-btn[data-group="'+group+'"].on');
+  return btn?btn.getAttribute('data-value'):'';
+}
+function setChkValues(group,vals){
+  if(!vals) return;
+  document.querySelectorAll('.chk-btn[data-group="'+group+'"]').forEach(function(b){
+    b.classList.toggle('on', vals.indexOf(b.getAttribute('data-value'))>=0);
   });
 }
+function setRadioValue(group,val){
+  document.querySelectorAll('.chk-btn[data-group="'+group+'"]').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-value')===val);
+  });
+}
+function clearAllChk(){
+  document.querySelectorAll('.chk-btn').forEach(function(b){ b.classList.remove('on'); });
+}
 
-function updateComunas() {
-  var r = document.getElementById('f-region').value;
-  var p = document.getElementById('f-provincia').value;
-  var cSel = document.getElementById('f-comuna');
-  cSel.innerHTML = '<option value="">Seleccionar...</option>';
+// ─── REGIONES ─────────────────────────────────────────────────────────
+function populateRegiones(){
+  var sel=document.getElementById('f-region');
+  var filt=document.getElementById('filter-region');
+  Object.keys(CHILE).forEach(function(r){
+    var o=document.createElement('option');o.value=r;o.textContent=r;sel.appendChild(o);
+    var o2=document.createElement('option');o2.value=r;o2.textContent=r;filt.appendChild(o2);
+  });
+}
+function updateProvincias(){
+  var r=document.getElementById('f-region').value;
+  var pSel=document.getElementById('f-provincia');
+  var cSel=document.getElementById('f-comuna');
+  pSel.innerHTML='<option value="">Seleccionar...</option>';
+  cSel.innerHTML='<option value="">Seleccionar...</option>';
+  if(!r||!CHILE[r]) return;
+  Object.keys(CHILE[r]).forEach(function(p){var o=document.createElement('option');o.value=p;o.textContent=p;pSel.appendChild(o);});
+}
+function updateComunas(){
+  var r=document.getElementById('f-region').value;
+  var p=document.getElementById('f-provincia').value;
+  var cSel=document.getElementById('f-comuna');
+  cSel.innerHTML='<option value="">Seleccionar...</option>';
   if(!r||!p||!CHILE[r]||!CHILE[r][p]) return;
-  CHILE[r][p].forEach(function(c) {
-    var o = document.createElement('option'); o.value=c; o.textContent=c; cSel.appendChild(o);
-  });
+  CHILE[r][p].forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;cSel.appendChild(o);});
 }
-
-function setRegionProvincia(r,p,c) {
-  var rSel = document.getElementById('f-region');
-  rSel.value = r||'';
+function setRegion(r,p,c){
+  document.getElementById('f-region').value=r||'';
   updateProvincias();
-  if(p) { document.getElementById('f-provincia').value = p; updateComunas(); }
-  if(c) document.getElementById('f-comuna').value = c;
+  if(p){document.getElementById('f-provincia').value=p;updateComunas();}
+  if(c) document.getElementById('f-comuna').value=c;
 }
 
-// ─── NAVIGATION ───────────────────────────────────────────────────────
-function showScreen(name) {
-  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
-  document.querySelectorAll('nav button').forEach(function(b){ b.classList.remove('active'); });
+// ─── NAV ──────────────────────────────────────────────────────────────
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('nav button').forEach(function(b){b.classList.remove('active');});
   document.getElementById('screen-'+name).classList.add('active');
   document.getElementById('nav-'+name).classList.add('active');
   if(name==='home') renderFichas();
-  if(name==='config') document.getElementById('cfg-count').textContent = fichas.length+' fichas';
+  if(name==='config') document.getElementById('cfg-count').textContent=fichas.length+' fichas';
 }
 
-function nuevaFicha() {
-  currentId = null; photos = []; vertices = [];
-  document.querySelectorAll('#screen-form input:not([type=radio]):not([type=checkbox]):not([type=file]):not([type=hidden])').forEach(function(el){ el.value=''; });
-  document.querySelectorAll('#screen-form textarea').forEach(function(el){ el.value=''; });
-  document.querySelectorAll('#screen-form input[type=checkbox]').forEach(function(el){ el.checked=false; });
-  document.querySelectorAll('#screen-form input[type=radio]').forEach(function(el){ el.checked=false; });
-  document.querySelectorAll('#screen-form select').forEach(function(el){ el.selectedIndex=0; });
+function nuevaFicha(){
+  currentId=null; photos=[]; vertices=[];
+  document.querySelectorAll('#screen-form input:not([type=file]):not([type=hidden])').forEach(function(el){el.value='';});
+  document.querySelectorAll('#screen-form textarea').forEach(function(el){el.value='';});
+  document.querySelectorAll('#screen-form select').forEach(function(el){el.selectedIndex=0;});
   updateProvincias(); updateComunas();
-  buildMats(); renderPhotos(); renderVertices();
-  setToday(); clearCanvas();
-  if(cfg.proyecto) document.getElementById('f-proyecto').value = cfg.proyecto;
-  if(cfg.resp) document.getElementById('f-responsable').value = cfg.resp;
-  if(cfg.campana) document.getElementById('f-campana').value = cfg.campana;
-  document.getElementById('gps-coords').textContent = 'Sin coordenadas aún';
-  document.getElementById('gps-status').textContent = '';
-  document.getElementById('f-lat').value = '';
-  document.getElementById('f-lon').value = '';
-  document.getElementById('btn-pdf').style.display = 'none';
-  document.getElementById('btn-del').style.display = 'none';
-  document.getElementById('form-title').textContent = 'Nueva Ficha';
-  document.getElementById('ficha-id-badge').textContent = '';
+  clearAllChk(); buildMats(); renderPhotos(); renderVertices(); setToday(); clearCanvas();
+  if(cfg.proyecto) document.getElementById('f-proyecto').value=cfg.proyecto;
+  if(cfg.resp) document.getElementById('f-responsable').value=cfg.resp;
+  if(cfg.campana) document.getElementById('f-campana').value=cfg.campana;
+  document.getElementById('gps-coords').textContent='Sin coordenadas aún';
+  document.getElementById('gps-status').textContent='';
+  document.getElementById('f-lat').value='';
+  document.getElementById('f-lon').value='';
+  document.getElementById('btn-pdf').style.display='none';
+  document.getElementById('btn-del').style.display='none';
+  document.getElementById('form-title').textContent='Nueva Ficha';
+  document.getElementById('ficha-id-badge').textContent='';
   showScreen('form');
 }
 
-// ─── VERTICES ─────────────────────────────────────────────────────────
-function addVertice() {
-  vertices.push({ubicacion:'Dentro del AI', n:'', e:''});
-  renderVertices();
-}
-
-function renderVertices() {
-  var html = '';
-  vertices.forEach(function(v,i) {
-    html += '<div class="vtx-row">';
-    html += '<span>'+(i+1)+'</span>';
-    html += '<input type="text" value="'+v.ubicacion+'" onchange="vertices['+i+'].ubicacion=this.value" placeholder="Ubicación">';
-    html += '<input type="text" value="'+v.n+'" onchange="vertices['+i+'].n=this.value" placeholder="Norte">';
-    html += '<input type="text" value="'+v.e+'" onchange="vertices['+i+'].e=this.value" placeholder="Este">';
-    html += '<button onclick="removeVertice('+i+')">✕</button>';
-    html += '</div>';
+// ─── VÉRTICES ─────────────────────────────────────────────────────────
+function addVertice(){vertices.push({ubicacion:'Dentro del AI',n:'',e:''});renderVertices();}
+function removeVertice(i){vertices.splice(i,1);renderVertices();}
+function renderVertices(){
+  var html='';
+  vertices.forEach(function(v,i){
+    html+='<div class="vtx-row"><span>'+(i+1)+'</span>';
+    html+='<input type="text" value="'+v.ubicacion+'" onchange="vertices['+i+'].ubicacion=this.value" placeholder="Ubicación">';
+    html+='<input type="text" value="'+v.n+'" onchange="vertices['+i+'].n=this.value" placeholder="Norte">';
+    html+='<input type="text" value="'+v.e+'" onchange="vertices['+i+'].e=this.value" placeholder="Este">';
+    html+='<button onclick="removeVertice('+i+')">✕</button></div>';
   });
-  document.getElementById('vtx-list').innerHTML = html;
+  document.getElementById('vtx-list').innerHTML=html;
 }
-
-function removeVertice(i) { vertices.splice(i,1); renderVertices(); }
 
 // ─── MATERIALES ───────────────────────────────────────────────────────
-function buildMats() {
-  var html = '';
-  MATS.forEach(function(m) {
-    html += '<tr><td><b>'+m+'</b></td><td><input type="number" min="0" id="mq-'+m+'" placeholder="0" style="width:60px"></td><td><input type="text" id="md-'+m+'" placeholder="Descripción..."></td></tr>';
+function buildMats(){
+  var html='';
+  MATS.forEach(function(m){
+    html+='<tr><td><b>'+m+'</b></td><td><input type="number" min="0" id="mq-'+m+'" placeholder="0" style="width:60px"></td><td><input type="text" id="md-'+m+'" placeholder="Descripción..."></td></tr>';
   });
-  document.getElementById('mat-body').innerHTML = html;
+  document.getElementById('mat-body').innerHTML=html;
 }
 
 // ─── GPS ──────────────────────────────────────────────────────────────
-function getGPS() {
-  var status = document.getElementById('gps-status');
-  var coords = document.getElementById('gps-coords');
-  var btn = document.getElementById('btn-gps');
-  if(!navigator.geolocation){ status.textContent='GPS no disponible'; return; }
-  var bestAcc=Infinity, watchId=null, attempts=0, maxAttempts=8, timeout=null;
-  btn.disabled=true; btn.textContent='🔄 Buscando...';
-  status.textContent='Capturando lecturas para mayor precisión...';
-  function done(){ if(watchId!==null) navigator.geolocation.clearWatch(watchId); clearTimeout(timeout); btn.disabled=false; btn.textContent='📡 Actualizar GPS'; }
-  watchId = navigator.geolocation.watchPosition(function(pos){
-    var lat=pos.coords.latitude, lon=pos.coords.longitude, acc=pos.coords.accuracy, alt=pos.coords.altitude;
-    attempts++;
-    status.textContent='Lectura '+attempts+'/'+maxAttempts+' — precisión: ±'+Math.round(acc)+' m';
+function getGPS(){
+  var status=document.getElementById('gps-status'),coords=document.getElementById('gps-coords'),btn=document.getElementById('btn-gps');
+  if(!navigator.geolocation){status.textContent='GPS no disponible';return;}
+  var bestAcc=Infinity,watchId=null,attempts=0,timeout=null;
+  btn.disabled=true;btn.textContent='🔄 Buscando...';status.textContent='Capturando lecturas...';
+  function done(){if(watchId!==null)navigator.geolocation.clearWatch(watchId);clearTimeout(timeout);btn.disabled=false;btn.textContent='📡 Actualizar GPS';}
+  watchId=navigator.geolocation.watchPosition(function(pos){
+    var lat=pos.coords.latitude,lon=pos.coords.longitude,acc=pos.coords.accuracy,alt=pos.coords.altitude;
+    attempts++;status.textContent='Lectura '+attempts+'/8 — precisión: ±'+Math.round(acc)+' m';
     if(acc<bestAcc){
       bestAcc=acc;
-      document.getElementById('f-lat').value=lat.toFixed(6);
-      document.getElementById('f-lon').value=lon.toFixed(6);
-      if(alt) document.getElementById('f-altitud').value=Math.round(alt);
+      document.getElementById('f-lat').value=lat.toFixed(6);document.getElementById('f-lon').value=lon.toFixed(6);
+      if(alt)document.getElementById('f-altitud').value=Math.round(alt);
       document.getElementById('f-error').value=Math.round(acc);
       var utm=toUTM(lat,lon);
-      document.getElementById('f-utmn').value=Math.round(utm.N);
-      document.getElementById('f-utme').value=Math.round(utm.E);
-      document.getElementById('f-huso').value=utm.zone;
+      document.getElementById('f-utmn').value=Math.round(utm.N);document.getElementById('f-utme').value=Math.round(utm.E);document.getElementById('f-huso').value=utm.zone;
       coords.textContent='UTM N: '+Math.round(utm.N)+'  E: '+Math.round(utm.E)+'  Huso: '+utm.zone;
     }
-    if(acc<=5||attempts>=maxAttempts){ done(); status.textContent='✅ Precisión final: ±'+Math.round(bestAcc)+' m ('+attempts+' lecturas)'; }
-  }, function(err){ done(); status.textContent='❌ '+err.message; }, {enableHighAccuracy:true,timeout:20000,maximumAge:0});
-  timeout=setTimeout(function(){ done(); status.textContent=bestAcc<Infinity?'✅ Mejor precisión: ±'+Math.round(bestAcc)+' m':'⏱ Sin señal GPS.'; },25000);
+    if(acc<=5||attempts>=8){done();status.textContent='✅ Precisión final: ±'+Math.round(bestAcc)+' m';}
+  },function(err){done();status.textContent='❌ '+err.message;},{enableHighAccuracy:true,timeout:20000,maximumAge:0});
+  timeout=setTimeout(function(){done();status.textContent=bestAcc<Infinity?'✅ Mejor precisión: ±'+Math.round(bestAcc)+' m':'⏱ Sin señal GPS.';},25000);
 }
 
 function toUTM(lat,lon){
@@ -565,184 +520,112 @@ function toUTM(lat,lon){
   var phi=lat*Math.PI/180,lam=(lon-lon0)*Math.PI/180;
   var N=a/Math.sqrt(1-e2*Math.sin(phi)*Math.sin(phi));
   var T=Math.tan(phi)*Math.tan(phi),C=e2/(1-e2)*Math.cos(phi)*Math.cos(phi),A=Math.cos(phi)*lam;
-  var M=a*((1-e2/4-3*e2*e2/64-5*e2*e2*e2/256)*phi-(3*e2/8+3*e2*e2/32+45*e2*e2*e2/1024)*Math.sin(2*phi)+(15*e2*e2/256+45*e2*e2*e2/1024)*Math.sin(4*phi)-(35*e2*e2*e2/3072)*Math.sin(6*phi));
-  var E=k0*N*(A+(1-T+C)*A*A*A/6+(5-18*T+T*T+72*C-58*e2/(1-e2))*A*A*A*A*A/120)+E0;
-  var Nn=k0*(M+N*Math.tan(phi)*(A*A/2+(5-T+9*C+4*C*C)*A*A*A*A/24+(61-58*T+T*T+600*C-330*e2/(1-e2))*A*A*A*A*A*A/720))+N0;
+  var M=a*((1-e2/4-3*e2*e2/64)*phi-(3*e2/8+3*e2*e2/32)*Math.sin(2*phi)+(15*e2*e2/256)*Math.sin(4*phi));
+  var E=k0*N*(A+(1-T+C)*A*A*A/6+(5-18*T+T*T+72*C)*A*A*A*A*A/120)+E0;
+  var Nn=k0*(M+N*Math.tan(phi)*(A*A/2+(5-T+9*C+4*C*C)*A*A*A*A/24+(61-58*T+T*T+600*C)*A*A*A*A*A*A/720))+N0;
   return {E:E,N:Nn,zone:zone+(lat>=0?'':'S')};
 }
 
 function calcArea(){
-  var l=parseFloat(document.getElementById('f-largo').value)||0;
-  var a=parseFloat(document.getElementById('f-ancho').value)||0;
-  if(l&&a) document.getElementById('f-area').value=(l*a).toFixed(2);
+  var l=parseFloat(document.getElementById('f-largo').value)||0,a=parseFloat(document.getElementById('f-ancho').value)||0;
+  if(l&&a)document.getElementById('f-area').value=(l*a).toFixed(2);
 }
 
-// ─── CANVAS CROQUIS ───────────────────────────────────────────────────
-function initCanvas() {
-  var canvas = document.getElementById('croquis-canvas');
-  var ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-  function getPos(e) {
-    var r = canvas.getBoundingClientRect();
-    var scaleX = canvas.width/r.width, scaleY = canvas.height/r.height;
-    var src = e.touches ? e.touches[0] : e;
-    return {x:(src.clientX-r.left)*scaleX, y:(src.clientY-r.top)*scaleY};
+// ─── CANVAS ───────────────────────────────────────────────────────────
+function initCanvas(){
+  var canvas=document.getElementById('croquis-canvas'),ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+  function getPos(e){
+    var r=canvas.getBoundingClientRect(),scaleX=canvas.width/r.width,scaleY=canvas.height/r.height;
+    var src=e.touches?e.touches[0]:e;
+    return {x:(src.clientX-r.left)*scaleX,y:(src.clientY-r.top)*scaleY};
   }
-  function start(e) {
-    e.preventDefault();
-    isDrawing=true;
-    var p=getPos(e); lastX=p.x; lastY=p.y; startX=p.x; startY=p.y;
-    if(drawTool==='line') snapshot=ctx.getImageData(0,0,canvas.width,canvas.height);
+  function start(e){e.preventDefault();isDrawing=true;var p=getPos(e);lastX=p.x;lastY=p.y;startX=p.x;startY=p.y;if(drawTool==='line')snapshot=ctx.getImageData(0,0,canvas.width,canvas.height);}
+  function move(e){
+    e.preventDefault();if(!isDrawing)return;
+    var p=getPos(e),color=document.getElementById('draw-color').value,size=parseInt(document.getElementById('draw-size').value);
+    ctx.lineJoin='round';ctx.lineCap='round';
+    if(drawTool==='pen'){ctx.strokeStyle=color;ctx.lineWidth=size;ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);ctx.stroke();}
+    else if(drawTool==='eraser'){ctx.strokeStyle='#fff';ctx.lineWidth=size*4;ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);ctx.stroke();}
+    else if(drawTool==='line'){ctx.putImageData(snapshot,0,0);ctx.strokeStyle=color;ctx.lineWidth=size;ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(p.x,p.y);ctx.stroke();}
+    lastX=p.x;lastY=p.y;
   }
-  function move(e) {
-    e.preventDefault();
-    if(!isDrawing) return;
-    var p=getPos(e);
-    var color=document.getElementById('draw-color').value;
-    var size=parseInt(document.getElementById('draw-size').value);
-    ctx.lineJoin='round'; ctx.lineCap='round';
-    if(drawTool==='pen') {
-      ctx.strokeStyle=color; ctx.lineWidth=size;
-      ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke();
-    } else if(drawTool==='eraser') {
-      ctx.strokeStyle='#fff'; ctx.lineWidth=size*4;
-      ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke();
-    } else if(drawTool==='line') {
-      ctx.putImageData(snapshot,0,0);
-      ctx.strokeStyle=color; ctx.lineWidth=size;
-      ctx.beginPath(); ctx.moveTo(startX,startY); ctx.lineTo(p.x,p.y); ctx.stroke();
-    }
-    lastX=p.x; lastY=p.y;
-  }
-  function end(e){ e.preventDefault(); isDrawing=false; }
+  function end(e){e.preventDefault();isDrawing=false;}
   canvas.addEventListener('mousedown',start);canvas.addEventListener('mousemove',move);canvas.addEventListener('mouseup',end);
   canvas.addEventListener('touchstart',start,{passive:false});canvas.addEventListener('touchmove',move,{passive:false});canvas.addEventListener('touchend',end,{passive:false});
 }
-
-function setTool(t) {
-  drawTool=t;
-  ['pen','line','eraser'].forEach(function(tt){ document.getElementById('tool-'+tt).classList.toggle('active',tt===t); });
-}
-
-function clearCanvas() {
-  var canvas=document.getElementById('croquis-canvas');
-  var ctx=canvas.getContext('2d');
-  ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-}
-
-function getCanvasData() {
-  return document.getElementById('croquis-canvas').toDataURL('image/png');
-}
-
-function loadCanvasData(data) {
-  if(!data) return;
-  var canvas=document.getElementById('croquis-canvas');
-  var ctx=canvas.getContext('2d');
-  var img=new Image();
-  img.onload=function(){ ctx.drawImage(img,0,0); };
-  img.src=data;
-}
+function setTool(t){drawTool=t;['pen','line','eraser'].forEach(function(tt){document.getElementById('tool-'+tt).classList.toggle('active',tt===t);});}
+function clearCanvas(){var c=document.getElementById('croquis-canvas'),ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);}
+function getCanvasData(){return document.getElementById('croquis-canvas').toDataURL('image/png');}
+function loadCanvasData(data){if(!data)return;var c=document.getElementById('croquis-canvas'),ctx=c.getContext('2d'),img=new Image();img.onload=function(){ctx.drawImage(img,0,0);};img.src=data;}
 
 // ─── PHOTOS ───────────────────────────────────────────────────────────
-function addPhoto(e) {
-  var files=Array.from(e.target.files);
-  files.forEach(function(f){
-    var r=new FileReader();
-    r.onload=function(ev){ photos.push(ev.target.result); renderPhotos(); };
-    r.readAsDataURL(f);
-  });
+function addPhoto(e){
+  Array.from(e.target.files).forEach(function(f){var r=new FileReader();r.onload=function(ev){photos.push(ev.target.result);renderPhotos();};r.readAsDataURL(f);});
   e.target.value='';
 }
-
-function renderPhotos() {
-  var html=photos.map(function(p,i){
-    return '<div class="photo-thumb"><img src="'+p+'"><button class="del-photo" onclick="removePhoto('+i+')">×</button></div>';
-  }).join('');
+function renderPhotos(){
+  var html=photos.map(function(p,i){return '<div class="photo-thumb"><img src="'+p+'"><button class="del-photo" onclick="removePhoto('+i+')">×</button></div>';}).join('');
   html+='<label class="add-photo-btn" for="photo-input"><span style="font-size:28px">📷</span><span>Agregar</span></label>';
   document.getElementById('photos-grid').innerHTML=html;
 }
+function removePhoto(i){photos.splice(i,1);renderPhotos();}
 
-function removePhoto(i){ photos.splice(i,1); renderPhotos(); }
+// ─── FORM ─────────────────────────────────────────────────────────────
+function nextId(){var max=0;fichas.forEach(function(f){if(f.codigo){var n=parseInt(f.codigo.replace('RS-',''));if(n>max)max=n;}});return 'RS-'+String(max+1).padStart(3,'0');}
 
-// ─── FORM HELPERS ─────────────────────────────────────────────────────
-function getChecked(grpId){
-  var v=[]; document.querySelectorAll('#'+grpId+' input[type=checkbox]:checked').forEach(function(c){ v.push(c.value); }); return v;
-}
-function getRadio(name){
-  var el=document.querySelector('input[name="'+name+'"]:checked'); return el?el.value:'';
-}
-function setChecked(grpId,vals){
-  if(!vals) return;
-  document.querySelectorAll('#'+grpId+' input[type=checkbox]').forEach(function(c){ c.checked=vals.indexOf(c.value)>=0; });
-}
-function setRadio(name,val){
-  if(!val) return;
-  var el=document.querySelector('input[name="'+name+'"][value="'+val+'"]');
-  if(el) el.checked=true;
-}
-
-function nextId() {
-  var max=0;
-  fichas.forEach(function(f){ if(f.codigo){ var n=parseInt(f.codigo.replace('RS-','')); if(n>max) max=n; } });
-  return 'RS-'+String(max+1).padStart(3,'0');
-}
-
-function getForm() {
+function getForm(){
   var mats={};
-  MATS.forEach(function(m){
-    var q=document.getElementById('mq-'+m), d=document.getElementById('md-'+m);
-    mats[m]={qty:q?q.value:'',desc:d?d.value:''};
-  });
+  MATS.forEach(function(m){var q=document.getElementById('mq-'+m),d=document.getElementById('md-'+m);mats[m]={qty:q?q.value:'',desc:d?d.value:''};});
   return {
-    id: currentId||String(Date.now()),
-    codigo: document.getElementById('ficha-id-badge').textContent||nextId(),
-    sitio: document.getElementById('f-sitio').value,
-    unidad: document.getElementById('f-unidad').value,
-    proyecto: document.getElementById('f-proyecto').value,
-    region: document.getElementById('f-region').value,
-    provincia: document.getElementById('f-provincia').value,
-    comuna: document.getElementById('f-comuna').value,
-    lat: document.getElementById('f-lat').value,
-    lon: document.getElementById('f-lon').value,
-    utmN: document.getElementById('f-utmn').value,
-    utmE: document.getElementById('f-utme').value,
-    huso: document.getElementById('f-huso').value,
-    error: document.getElementById('f-error').value,
-    altitud: document.getElementById('f-altitud').value,
-    vertices: vertices,
-    tipo: document.getElementById('f-tipo').value,
-    tipologia: getChecked('grp-tipologia'),
-    tipologiaOtro: document.getElementById('f-tipologia-otro').value,
-    periodo: getChecked('grp-periodo'),
-    periodoEsp: document.getElementById('f-periodo-esp').value,
-    recoleccion: getRadio('recoleccion'),
-    largo: document.getElementById('f-largo').value,
-    ancho: document.getElementById('f-ancho').value,
-    area: document.getElementById('f-area').value,
-    mats: mats,
-    diagnosticos: document.getElementById('f-diagnosticos').value,
-    emplazamiento: getChecked('grp-emplazamiento'),
-    emplOtro: document.getElementById('f-empl-otro').value,
-    emplDesc: document.getElementById('f-empl-desc').value,
-    conservacion: getRadio('conservacion'),
-    consDesc: document.getElementById('f-cons-desc').value,
-    responsable: document.getElementById('f-responsable').value,
-    ayudantes: document.getElementById('f-ayudantes').value,
-    fecha: document.getElementById('f-fecha').value,
-    campana: document.getElementById('f-campana').value,
-    obs: document.getElementById('f-obs').value,
-    croquis: getCanvasData(),
-    photos: photos,
-    ts: new Date().toISOString()
+    id:currentId||String(Date.now()),
+    codigo:document.getElementById('ficha-id-badge').textContent||nextId(),
+    sitio:document.getElementById('f-sitio').value,
+    unidad:document.getElementById('f-unidad').value,
+    proyecto:document.getElementById('f-proyecto').value,
+    region:document.getElementById('f-region').value,
+    provincia:document.getElementById('f-provincia').value,
+    comuna:document.getElementById('f-comuna').value,
+    lat:document.getElementById('f-lat').value,
+    lon:document.getElementById('f-lon').value,
+    utmN:document.getElementById('f-utmn').value,
+    utmE:document.getElementById('f-utme').value,
+    huso:document.getElementById('f-huso').value,
+    error:document.getElementById('f-error').value,
+    altitud:document.getElementById('f-altitud').value,
+    vertices:vertices,
+    tipo:document.getElementById('f-tipo').value,
+    tipologia:getChkValues('tipologia'),
+    tipologiaOtro:document.getElementById('f-tipologia-otro').value,
+    periodo:getChkValues('periodo'),
+    periodoEsp:document.getElementById('f-periodo-esp').value,
+    recoleccion:getRadioValue('recoleccion'),
+    largo:document.getElementById('f-largo').value,
+    ancho:document.getElementById('f-ancho').value,
+    area:document.getElementById('f-area').value,
+    mats:mats,
+    diagnosticos:document.getElementById('f-diagnosticos').value,
+    emplazamiento:getChkValues('emplazamiento'),
+    emplOtro:document.getElementById('f-empl-otro').value,
+    emplDesc:document.getElementById('f-empl-desc').value,
+    conservacion:getRadioValue('conservacion'),
+    consDesc:document.getElementById('f-cons-desc').value,
+    responsable:document.getElementById('f-responsable').value,
+    ayudantes:document.getElementById('f-ayudantes').value,
+    fecha:document.getElementById('f-fecha').value,
+    campana:document.getElementById('f-campana').value,
+    obs:document.getElementById('f-obs').value,
+    croquis:getCanvasData(),
+    photos:photos,
+    ts:new Date().toISOString()
   };
 }
 
-function setForm(d) {
+function setForm(d){
   document.getElementById('f-sitio').value=d.sitio||'';
   document.getElementById('f-unidad').value=d.unidad||'';
   document.getElementById('f-proyecto').value=d.proyecto||'';
-  setRegionProvincia(d.region,d.provincia,d.comuna);
+  setRegion(d.region,d.provincia,d.comuna);
   document.getElementById('f-lat').value=d.lat||'';
   document.getElementById('f-lon').value=d.lon||'';
   document.getElementById('f-utmn').value=d.utmN||'';
@@ -750,45 +633,39 @@ function setForm(d) {
   document.getElementById('f-huso').value=d.huso||'';
   document.getElementById('f-error').value=d.error||'';
   document.getElementById('f-altitud').value=d.altitud||'';
-  vertices=d.vertices||[]; renderVertices();
+  vertices=d.vertices||[];renderVertices();
   document.getElementById('f-tipo').value=d.tipo||'';
-  setChecked('grp-tipologia',d.tipologia);
+  setChkValues('tipologia',d.tipologia);
   document.getElementById('f-tipologia-otro').value=d.tipologiaOtro||'';
-  setChecked('grp-periodo',d.periodo);
+  setChkValues('periodo',d.periodo);
   document.getElementById('f-periodo-esp').value=d.periodoEsp||'';
-  setRadio('recoleccion',d.recoleccion);
+  setRadioValue('recoleccion',d.recoleccion);
   document.getElementById('f-largo').value=d.largo||'';
   document.getElementById('f-ancho').value=d.ancho||'';
   document.getElementById('f-area').value=d.area||'';
-  MATS.forEach(function(m){
-    var md=d.mats&&d.mats[m]?d.mats[m]:{qty:'',desc:''};
-    var q=document.getElementById('mq-'+m),dd=document.getElementById('md-'+m);
-    if(q) q.value=md.qty||''; if(dd) dd.value=md.desc||'';
-  });
+  MATS.forEach(function(m){var md=d.mats&&d.mats[m]?d.mats[m]:{qty:'',desc:''};var q=document.getElementById('mq-'+m),dd=document.getElementById('md-'+m);if(q)q.value=md.qty||'';if(dd)dd.value=md.desc||'';});
   document.getElementById('f-diagnosticos').value=d.diagnosticos||'';
-  setChecked('grp-emplazamiento',d.emplazamiento);
+  setChkValues('emplazamiento',d.emplazamiento);
   document.getElementById('f-empl-otro').value=d.emplOtro||'';
   document.getElementById('f-empl-desc').value=d.emplDesc||'';
-  setRadio('conservacion',d.conservacion);
+  setRadioValue('conservacion',d.conservacion);
   document.getElementById('f-cons-desc').value=d.consDesc||'';
   document.getElementById('f-responsable').value=d.responsable||'';
   document.getElementById('f-ayudantes').value=d.ayudantes||'';
   document.getElementById('f-fecha').value=d.fecha||'';
   document.getElementById('f-campana').value=d.campana||'';
   document.getElementById('f-obs').value=d.obs||'';
-  photos=d.photos||[]; renderPhotos();
-  clearCanvas(); if(d.croquis) setTimeout(function(){ loadCanvasData(d.croquis); },100);
-  if(d.lat&&d.lon) document.getElementById('gps-coords').textContent='UTM N: '+d.utmN+'  E: '+d.utmE+'  Huso: '+d.huso;
+  photos=d.photos||[];renderPhotos();
+  clearCanvas();if(d.croquis)setTimeout(function(){loadCanvasData(d.croquis);},100);
+  if(d.lat&&d.lon)document.getElementById('gps-coords').textContent='UTM N: '+d.utmN+'  E: '+d.utmE+'  Huso: '+d.huso;
 }
 
-// ─── SAVE / LOAD / DELETE ─────────────────────────────────────────────
-function saveFicha() {
+function saveFicha(){
   var data=getForm();
-  if(!data.sitio){ showToast('⚠️ Ingresa el nombre del sitio'); return; }
-  if(!data.codigo||data.codigo==='') data.codigo=nextId();
-  var idx=-1;
-  fichas.forEach(function(f,i){ if(f.id===data.id) idx=i; });
-  if(idx>=0) fichas[idx]=data; else fichas.unshift(data);
+  if(!data.sitio){showToast('⚠️ Ingresa el nombre del sitio');return;}
+  if(!data.codigo)data.codigo=nextId();
+  var idx=-1;fichas.forEach(function(f,i){if(f.id===data.id)idx=i;});
+  if(idx>=0)fichas[idx]=data;else fichas.unshift(data);
   currentId=data.id;
   localStorage.setItem('fichas_ays',JSON.stringify(fichas));
   document.getElementById('btn-pdf').style.display='inline-flex';
@@ -798,11 +675,10 @@ function saveFicha() {
   showToast('✅ Ficha '+data.codigo+' guardada');
 }
 
-function loadFicha(id) {
-  var d=null; fichas.forEach(function(f){ if(f.id===id) d=f; });
-  if(!d) return;
-  currentId=id;
-  buildMats(); setForm(d);
+function loadFicha(id){
+  var d=null;fichas.forEach(function(f){if(f.id===id)d=f;});
+  if(!d)return;
+  currentId=id;buildMats();setForm(d);
   document.getElementById('btn-pdf').style.display='inline-flex';
   document.getElementById('btn-del').style.display='inline-flex';
   document.getElementById('form-title').textContent='Editando: '+d.sitio;
@@ -810,315 +686,225 @@ function loadFicha(id) {
   showScreen('form');
 }
 
-function askDelete(){ document.getElementById('modal-del').classList.add('open'); }
-function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function askDelete(){document.getElementById('modal-del').classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
 function confirmDelete(){
-  fichas=fichas.filter(function(f){ return f.id!==currentId; });
+  fichas=fichas.filter(function(f){return f.id!==currentId;});
   localStorage.setItem('fichas_ays',JSON.stringify(fichas));
-  closeModal('modal-del'); nuevaFicha(); showScreen('home');
-  showToast('🗑 Ficha eliminada');
+  closeModal('modal-del');nuevaFicha();showScreen('home');showToast('🗑 Ficha eliminada');
 }
 
-function renderFichas() {
+function renderFichas(){
   var list=document.getElementById('fichas-list');
-  var q=document.getElementById('search-input').value.toLowerCase();
+  var q=(document.getElementById('search-input').value||'').toLowerCase();
   var r=document.getElementById('filter-region').value;
   var filtered=fichas.filter(function(f){
     var match=!q||(f.sitio&&f.sitio.toLowerCase().includes(q))||(f.proyecto&&f.proyecto.toLowerCase().includes(q))||(f.fecha&&f.fecha.includes(q))||(f.codigo&&f.codigo.toLowerCase().includes(q));
-    var rMatch=!r||f.region===r;
-    return match&&rMatch;
+    return match&&(!r||f.region===r);
   });
   document.getElementById('ficha-count').textContent=filtered.length+'/'+fichas.length+' fichas';
-  if(!fichas.length){
-    list.innerHTML='<div class="empty"><div class="icon">🏛</div><p>No hay fichas guardadas.<br>Toca <b>Nueva</b> para comenzar.</p></div>'; return;
-  }
-  if(!filtered.length){
-    list.innerHTML='<div class="empty"><div class="icon">🔍</div><p>No hay fichas que coincidan<br>con la búsqueda.</p></div>'; return;
-  }
+  if(!fichas.length){list.innerHTML='<div class="empty"><div class="icon">🏛</div><p>No hay fichas guardadas.<br>Toca <b>Nueva</b> para comenzar.</p></div>';return;}
+  if(!filtered.length){list.innerHTML='<div class="empty"><div class="icon">🔍</div><p>No hay fichas que coincidan.</p></div>';return;}
   var html='';
   filtered.forEach(function(f){
     var b='';
-    if(f.codigo) b+='<span class="badge">'+f.codigo+'</span>';
-    if(f.fecha) b+='<span class="badge">📅 '+f.fecha+'</span>';
-    if(f.unidad) b+='<span class="badge">'+f.unidad+'</span>';
-    if(f.lat) b+='<span class="badge">🌐 GPS</span>';
-    if(f.photos&&f.photos.length) b+='<span class="badge">📷 '+f.photos.length+'</span>';
-    html+='<div class="ficha-card" onclick="loadFicha(\''+f.id+'\')"><h3>📍 '+(f.sitio||'Sin nombre')+'</h3><p>'+(f.proyecto||'')+''+(f.region?' — '+f.region:'')+'</p><div class="badges">'+b+'</div></div>';
+    if(f.codigo)b+='<span class="badge">'+f.codigo+'</span>';
+    if(f.fecha)b+='<span class="badge">📅 '+f.fecha+'</span>';
+    if(f.unidad)b+='<span class="badge">'+f.unidad+'</span>';
+    if(f.lat)b+='<span class="badge">🌐 GPS</span>';
+    if(f.photos&&f.photos.length)b+='<span class="badge">📷 '+f.photos.length+'</span>';
+    html+='<div class="ficha-card" onclick="loadFicha(\''+f.id+'\')"><h3>📍 '+(f.sitio||'Sin nombre')+'</h3><p>'+(f.proyecto||'')+(f.region?' — '+f.region:'')+'</p><div class="badges">'+b+'</div></div>';
   });
   list.innerHTML=html;
 }
 
-// ─── ZIP EXPORT / IMPORT ──────────────────────────────────────────────
-function exportZIP() {
-  if(!fichas.length){ showToast('No hay fichas para exportar'); return; }
+// ─── ZIP ──────────────────────────────────────────────────────────────
+function exportZIP(){
+  if(!fichas.length){showToast('No hay fichas para exportar');return;}
   showToast('⏳ Generando ZIP...');
   var zip=new JSZip();
-  var meta=fichas.map(function(f){
-    return {id:f.id,codigo:f.codigo,sitio:f.sitio,proyecto:f.proyecto,fecha:f.fecha,region:f.region,ts:f.ts};
-  });
-  zip.file('fichas_meta.json',JSON.stringify(meta,null,2));
+  zip.file('_backup_completo.json',JSON.stringify(fichas));
   fichas.forEach(function(f){
     var safe=(f.codigo||f.id)+'_'+(f.sitio||'ficha').replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_-]/g,'');
     var copy=JSON.parse(JSON.stringify(f));
-    var photoRefs=[];
-    (copy.photos||[]).forEach(function(p,i){
-      var ext='jpg',b64=p.replace(/^data:image\/\w+;base64,/,'');
-      var fname=safe+'_foto'+i+'.'+ext;
-      zip.file('fotos/'+fname,b64,{base64:true});
-      photoRefs.push(fname);
-    });
-    if(copy.croquis){
-      var cb=copy.croquis.replace(/^data:image\/\w+;base64,/,'');
-      zip.file('croquis/'+safe+'_croquis.png',cb,{base64:true});
-      copy.croquis='[ver croquis/'+safe+'_croquis.png]';
-    }
-    copy.photos=photoRefs;
+    var refs=[];
+    (copy.photos||[]).forEach(function(p,i){var b=p.replace(/^data:image\/\w+;base64,/,'');var fn=safe+'_foto'+i+'.jpg';zip.file('fotos/'+fn,b,{base64:true});refs.push(fn);});
+    if(copy.croquis){var cb=copy.croquis.replace(/^data:image\/\w+;base64,/,'');zip.file('croquis/'+safe+'_croquis.png',cb,{base64:true});copy.croquis='croquis/'+safe+'_croquis.png';}
+    copy.photos=refs;
     zip.file('fichas/'+safe+'.json',JSON.stringify(copy,null,2));
   });
-  // También guardar datos completos para importar
-  zip.file('_backup_completo.json',JSON.stringify(fichas));
   zip.generateAsync({type:'blob'}).then(function(blob){
-    var a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    var d=new Date(); var ds=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate());
-    a.download='fichas_ays_'+ds+'.zip';
-    a.click();
-    showToast('✅ ZIP exportado con '+fichas.length+' fichas');
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    var d=new Date();a.download='fichas_ays_'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'.zip';
+    a.click();showToast('✅ ZIP exportado con '+fichas.length+' fichas');
   });
 }
 
-function importZIP(e) {
-  var file=e.target.files[0]; if(!file) return;
-  var zip=new JSZip();
-  zip.loadAsync(file).then(function(z){
-    var backupFile=z.file('_backup_completo.json');
-    if(!backupFile){ showToast('❌ ZIP no válido'); return; }
-    backupFile.async('string').then(function(str){
-      var imported=JSON.parse(str);
-      pendingImport=imported;
-      var nuevas=0;
-      imported.forEach(function(f){ var ex=fichas.find(function(x){ return x.id===f.id; }); if(!ex) nuevas++; });
+function importZIP(e){
+  var file=e.target.files[0];if(!file)return;
+  new JSZip().loadAsync(file).then(function(z){
+    var bf=z.file('_backup_completo.json');
+    if(!bf){showToast('❌ ZIP no válido');return;}
+    bf.async('string').then(function(str){
+      var imported=JSON.parse(str);pendingImport=imported;
+      var nuevas=0;imported.forEach(function(f){if(!fichas.find(function(x){return x.id===f.id;}))nuevas++;});
       document.getElementById('modal-import-msg').textContent='Se encontraron '+imported.length+' fichas ('+nuevas+' nuevas). ¿Importar y combinar?';
       document.getElementById('modal-import').classList.add('open');
     });
-  }).catch(function(){ showToast('❌ Error al leer el ZIP'); });
+  }).catch(function(){showToast('❌ Error al leer el ZIP');});
   e.target.value='';
 }
 
-function confirmImport() {
-  if(!pendingImport) return;
+function confirmImport(){
+  if(!pendingImport)return;
   var added=0;
-  pendingImport.forEach(function(f){
-    var idx=fichas.findIndex(function(x){ return x.id===f.id; });
-    if(idx>=0) fichas[idx]=f; else { fichas.push(f); added++; }
-  });
-  fichas.sort(function(a,b){ return (b.ts||'').localeCompare(a.ts||''); });
+  pendingImport.forEach(function(f){var idx=fichas.findIndex(function(x){return x.id===f.id;});if(idx>=0)fichas[idx]=f;else{fichas.push(f);added++;}});
+  fichas.sort(function(a,b){return (b.ts||'').localeCompare(a.ts||'');});
   localStorage.setItem('fichas_ays',JSON.stringify(fichas));
-  closeModal('modal-import');
-  showToast('✅ '+added+' fichas nuevas importadas');
-  renderFichas();
-  pendingImport=null;
+  closeModal('modal-import');showToast('✅ '+added+' fichas nuevas importadas');renderFichas();pendingImport=null;
 }
 
 // ─── TOAST ────────────────────────────────────────────────────────────
-function showToast(msg){
-  var t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(function(){ t.classList.remove('show'); },2800);
-}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
 
 // ─── PDF ──────────────────────────────────────────────────────────────
-function exportPDF() {
+function exportPDF(){
   var data=getForm();
-  var jsPDF=window.jspdf.jsPDF;
-  var doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  var pw=210,ph=297,ml=14,mr=14,mt=14,cw=182;
-  var y=mt;
-
-  function sec(title,yy){
-    doc.setFillColor(58,125,44); doc.rect(ml,yy,cw,6,'F');
-    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
-    doc.text(title,ml+2,yy+4.2); return yy+6;
-  }
-  function bx(x,yy,w,h,fill){
-    if(fill) doc.setFillColor(fill[0],fill[1],fill[2]); else doc.setFillColor(255,255,255);
-    doc.setDrawColor(180,180,180); doc.rect(x,yy,w,h,fill?'FD':'D');
-  }
-  function lbl(t,x,yy){ doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(80,80,80);doc.text(t,x,yy); }
-  function val(t,x,yy,mw){ doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(30,30,30);var l=doc.splitTextToSize(t||'',mw||50);doc.text(l,x,yy); }
-  function chk(label,checked,x,yy){
-    doc.setFillColor(checked?58:255,checked?125:255,checked?44:255);
-    doc.setDrawColor(58,125,44); doc.rect(x,yy-3,3.5,3.5,checked?'F':'D');
-    if(checked){doc.setTextColor(255,255,255);doc.setFontSize(5);doc.text('v',x+0.7,yy-0.2);}
-    doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text(label,x+4.5,yy-0.2);
-  }
-  function np(need){ if(y+need>ph-16){doc.addPage();y=mt;} }
+  var doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  var pw=210,ph=297,ml=14,cw=182;var y=14;
+  function sec(t,yy){doc.setFillColor(58,125,44);doc.rect(ml,yy,cw,6,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text(t,ml+2,yy+4.2);return yy+6;}
+  function bx(x,yy,w,h,f){if(f)doc.setFillColor(f[0],f[1],f[2]);else doc.setFillColor(255,255,255);doc.setDrawColor(180,180,180);doc.rect(x,yy,w,h,f?'FD':'D');}
+  function lbl(t,x,yy){doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(80,80,80);doc.text(t,x,yy);}
+  function val(t,x,yy,mw){doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(t||'',mw||50),x,yy);}
+  function chk(label,checked,x,yy){doc.setFillColor(checked?58:255,checked?125:255,checked?44:255);doc.setDrawColor(58,125,44);doc.rect(x,yy-3,3.5,3.5,checked?'F':'D');if(checked){doc.setTextColor(255,255,255);doc.setFontSize(5);doc.text('v',x+0.7,yy-0.2);}doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text(label,x+4.5,yy-0.2);}
+  function np(n){if(y+n>ph-16){doc.addPage();y=14;}}
 
   // Header
-  doc.setFillColor(45,106,31); doc.roundedRect(ml,y,22,22,3,3,'F');
-  doc.setFillColor(122,182,72); doc.roundedRect(ml,y+14,22,8,3,3,'F');
-  doc.setFillColor(45,106,31); doc.rect(ml,y+14,22,4,'F');
-  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text('as',ml+4,y+11);
-  doc.setFontSize(5); doc.text('Ambiental',ml+2,y+18); doc.text('y Sectorial',ml+2,y+21.5);
-  doc.setTextColor(30,30,30); doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
+  doc.setFillColor(45,106,31);doc.roundedRect(ml,y,22,22,3,3,'F');
+  doc.setFillColor(122,182,72);doc.roundedRect(ml,y+14,22,8,3,3,'F');
+  doc.setFillColor(45,106,31);doc.rect(ml,y+14,22,4,'F');
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('as',ml+4,y+11);
+  doc.setFontSize(5);doc.text('Ambiental',ml+2,y+18);doc.text('y Sectorial',ml+2,y+21.5);
+  doc.setTextColor(30,30,30);doc.setFont('helvetica','bold');doc.setFontSize(10.5);
   doc.text('FICHA ARQUEOLÓGICA DE RECOLECCIÓN SUPERFICIAL',ml+26,y+7);
-  doc.setFontSize(8); doc.setFont('helvetica','normal');
-  doc.text('PROYECTO '+(data.proyecto||'').toUpperCase(),ml+26,y+13);
-  if(data.codigo){ doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(58,125,44);doc.text(data.codigo,pw-mr-18,y+7); }
+  doc.setFontSize(8);doc.setFont('helvetica','normal');doc.text('PROYECTO '+(data.proyecto||'').toUpperCase(),ml+26,y+13);
+  if(data.codigo){doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(58,125,44);doc.text(data.codigo,pw-28,y+7);}
   y+=28;
 
   // Identificación
   y=sec('IDENTIFICACIÓN GENERAL',y)+2;
-  bx(ml,y,cw/2,8); bx(ml+cw/2,y,cw/2,8);
-  lbl('NOMBRE SITIO/HALLAZGO',ml+1,y+3); lbl('NOMBRE UNIDAD',ml+cw/2+1,y+3);
-  val(data.sitio,ml+1,y+7,cw/2-3); val(data.unidad,ml+cw/2+1,y+7,cw/2-3);
-  y+=8;
-  var w3=cw/3;
-  bx(ml,y,w3,7); bx(ml+w3,y,w3,7); bx(ml+w3*2,y,w3,7);
-  lbl('REGIÓN',ml+1,y+3); lbl('PROVINCIA',ml+w3+1,y+3); lbl('COMUNA',ml+w3*2+1,y+3);
-  val(data.region,ml+1,y+6.5); val(data.provincia,ml+w3+1,y+6.5); val(data.comuna,ml+w3*2+1,y+6.5);
-  y+=10;
+  bx(ml,y,cw/2,8);bx(ml+cw/2,y,cw/2,8);
+  lbl('NOMBRE SITIO/HALLAZGO',ml+1,y+3);lbl('NOMBRE UNIDAD',ml+cw/2+1,y+3);
+  val(data.sitio,ml+1,y+7,cw/2-3);val(data.unidad,ml+cw/2+1,y+7,cw/2-3);y+=8;
+  var w3=cw/3;bx(ml,y,w3,7);bx(ml+w3,y,w3,7);bx(ml+w3*2,y,w3,7);
+  lbl('REGIÓN',ml+1,y+3);lbl('PROVINCIA',ml+w3+1,y+3);lbl('COMUNA',ml+w3*2+1,y+3);
+  val(data.region,ml+1,y+6.5);val(data.provincia,ml+w3+1,y+6.5);val(data.comuna,ml+w3*2+1,y+6.5);y+=10;
 
   // GPS
-  np(30); y=sec('COORDENADAS WGS84',y)+2;
+  np(30);y=sec('COORDENADAS WGS84',y)+2;
   var gw=cw/4;
-  [['UTM NORTE',data.utmN],['UTM ESTE',data.utmE],['HUSO',data.huso],['ALTITUD (msnm)',data.altitud]].forEach(function(pair,i){
-    bx(ml+gw*i,y,gw,7); lbl(pair[0],ml+gw*i+1,y+3); val(pair[1]||'',ml+gw*i+1,y+6.5);
-  });
-  y+=7;
-  [['LAT (°)',data.lat],['LON (°)',data.lon],['ERROR GPS (±m)',data.error],['','']] .forEach(function(pair,i){
-    bx(ml+gw*i,y,gw,7); if(pair[0]) lbl(pair[0],ml+gw*i+1,y+3); val(pair[1]||'',ml+gw*i+1,y+6.5);
-  });
-  y+=10;
+  [['UTM NORTE',data.utmN],['UTM ESTE',data.utmE],['HUSO',data.huso],['ALTITUD (msnm)',data.altitud]].forEach(function(p,i){bx(ml+gw*i,y,gw,7);lbl(p[0],ml+gw*i+1,y+3);val(p[1]||'',ml+gw*i+1,y+6.5);});y+=7;
+  [['LAT (°)',data.lat],['LON (°)',data.lon],['ERROR GPS (±m)',data.error],['','']].forEach(function(p,i){bx(ml+gw*i,y,gw,7);if(p[0])lbl(p[0],ml+gw*i+1,y+3);val(p[1]||'',ml+gw*i+1,y+6.5);});y+=10;
 
   // Vértices
   if(data.vertices&&data.vertices.length){
-    np(20); y=sec('VÉRTICES DEL POLÍGONO',y)+2;
-    doc.setFillColor(58,125,44);
-    doc.rect(ml,y,15,6,'F'); doc.rect(ml+15,y,45,6,'F'); doc.rect(ml+60,y,cw/2-10,6,'F'); doc.rect(ml+60+cw/2-10,y,cw-60-cw/2+10,6,'F');
-    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(7);
-    doc.text('#',ml+5,y+4.2); doc.text('UBICACIÓN',ml+16,y+4.2); doc.text('UTM NORTE',ml+61,y+4.2); doc.text('UTM ESTE',ml+61+cw/2-10+1,y+4.2);
-    y+=6;
+    np(20);y=sec('VÉRTICES DEL POLÍGONO',y)+2;
+    var vc=[15,45,cw/2-10,cw-60-cw/2+10];
+    doc.setFillColor(58,125,44);doc.rect(ml,y,vc[0],6,'F');doc.rect(ml+vc[0],y,vc[1],6,'F');doc.rect(ml+vc[0]+vc[1],y,vc[2],6,'F');doc.rect(ml+vc[0]+vc[1]+vc[2],y,vc[3],6,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(7);
+    doc.text('#',ml+5,y+4.2);doc.text('UBICACIÓN',ml+vc[0]+1,y+4.2);doc.text('UTM NORTE',ml+vc[0]+vc[1]+1,y+4.2);doc.text('UTM ESTE',ml+vc[0]+vc[1]+vc[2]+1,y+4.2);y+=6;
     data.vertices.forEach(function(v,i){
-      np(6);
-      var fill=i%2===0?[255,255,255]:[245,250,243];
-      bx(ml,y,15,6,fill); bx(ml+15,y,45,6,fill); bx(ml+60,y,cw/2-10,6,fill); bx(ml+60+cw/2-10,y,cw-60-cw/2+10,6,fill);
-      doc.setTextColor(30,30,30); doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
-      doc.text(String(i+1),ml+5,y+4.2); doc.text(v.ubicacion||'',ml+16,y+4.2); doc.text(v.n||'',ml+61,y+4.2); doc.text(v.e||'',ml+61+cw/2-10+1,y+4.2);
-      y+=6;
-    });
-    y+=4;
+      np(6);var fl=i%2===0?[255,255,255]:[245,250,243];
+      bx(ml,y,vc[0],6,fl);bx(ml+vc[0],y,vc[1],6,fl);bx(ml+vc[0]+vc[1],y,vc[2],6,fl);bx(ml+vc[0]+vc[1]+vc[2],y,vc[3],6,fl);
+      doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.setFontSize(7.5);
+      doc.text(String(i+1),ml+5,y+4.2);doc.text(v.ubicacion||'',ml+vc[0]+1,y+4.2);doc.text(v.n||'',ml+vc[0]+vc[1]+1,y+4.2);doc.text(v.e||'',ml+vc[0]+vc[1]+vc[2]+1,y+4.2);y+=6;
+    });y+=4;
   }
 
   // Características
-  np(35); y=sec('CARACTERÍSTICAS GENERALES DEL SITIO/HALLAZGO',y)+2;
-  bx(ml,y,cw,7); lbl('TIPO',ml+1,y+3); val(data.tipo,ml+20,y+6.5,cw-22); y+=9;
+  np(35);y=sec('CARACTERÍSTICAS GENERALES DEL SITIO/HALLAZGO',y)+2;
+  bx(ml,y,cw,7);lbl('TIPO',ml+1,y+3);val(data.tipo,ml+20,y+6.5,cw-22);y+=9;
   lbl('Tipología funcional:',ml,y+3);
   var tx=ml+35;
-  ['Doméstico/habitacional','Productivo','Tránsito','Ritual','Entierro','Indeterminado'].forEach(function(t){
-    chk(t,data.tipologia&&data.tipologia.indexOf(t)>=0,tx,y+3); tx+=30; if(tx>pw-mr-25){tx=ml+35;y+=6;}
-  });
+  ['Doméstico/habitacional','Productivo','Tránsito','Ritual','Entierro','Indeterminado'].forEach(function(t){chk(t,data.tipologia&&data.tipologia.indexOf(t)>=0,tx,y+3);tx+=30;if(tx>195){tx=ml+35;y+=6;}});
   if(data.tipologiaOtro){y+=6;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(30,30,30);doc.text('Otro: '+data.tipologiaOtro,ml,y+3);}
-  y+=8;
-  lbl('Período:',ml,y+3); tx=ml+20;
-  ['Prehispánico','Histórico','Indeterminado'].forEach(function(p){ chk(p,data.periodo&&data.periodo.indexOf(p)>=0,tx,y+3); tx+=30; });
+  y+=8;lbl('Período:',ml,y+3);tx=ml+20;
+  ['Prehispánico','Histórico','Indeterminado'].forEach(function(p){chk(p,data.periodo&&data.periodo.indexOf(p)>=0,tx,y+3);tx+=30;});
   if(data.periodoEsp){doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(30,30,30);doc.text('Período específico: '+data.periodoEsp,ml+100,y+3);}
   y+=10;
 
   // Recolección
-  np(25); y=sec('RECOLECCIÓN SUPERFICIAL ARQUEOLÓGICA',y)+3;
+  np(25);y=sec('RECOLECCIÓN SUPERFICIAL ARQUEOLÓGICA',y)+3;
   lbl('Tipo de recolección:',ml,y+3);
   chk('Decapado (5 cm)',data.recoleccion==='Decapado (5 cm)',ml+36,y+3);
-  chk('Barrido',data.recoleccion==='Barrido',ml+72,y+3); y+=8;
-  var dw=cw/3;
-  bx(ml,y,dw,7); bx(ml+dw,y,dw,7); bx(ml+dw*2,y,dw,7);
-  lbl('LARGO (m)',ml+1,y+3); lbl('ANCHO (m)',ml+dw+1,y+3); lbl('ÁREA (m²)',ml+dw*2+1,y+3);
-  val(data.largo,ml+1,y+6.5); val(data.ancho,ml+dw+1,y+6.5); val(data.area,ml+dw*2+1,y+6.5);
-  y+=10;
+  chk('Barrido',data.recoleccion==='Barrido',ml+72,y+3);y+=8;
+  var dw=cw/3;bx(ml,y,dw,7);bx(ml+dw,y,dw,7);bx(ml+dw*2,y,dw,7);
+  lbl('LARGO (m)',ml+1,y+3);lbl('ANCHO (m)',ml+dw+1,y+3);lbl('ÁREA (m²)',ml+dw*2+1,y+3);
+  val(data.largo,ml+1,y+6.5);val(data.ancho,ml+dw+1,y+6.5);val(data.area,ml+dw*2+1,y+6.5);y+=10;
 
   // Materiales
-  np(20); y=sec('MATERIAL ARQUEOLÓGICO RECOLECTADO',y)+1;
+  np(20);y=sec('MATERIAL ARQUEOLÓGICO RECOLECTADO',y)+1;
   var c1=40,c2=20,c3=cw-60;
-  doc.setFillColor(58,125,44); doc.rect(ml,y,c1,6,'F'); doc.rect(ml+c1,y,c2,6,'F'); doc.rect(ml+c1+c2,y,c3,6,'F');
-  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(7);
-  doc.text('TIPOLOGÍA',ml+1,y+4.2); doc.text('CANT.',ml+c1+1,y+4.2); doc.text('DESCRIPCIÓN GENERAL',ml+c1+c2+1,y+4.2);
-  y+=6;
+  doc.setFillColor(58,125,44);doc.rect(ml,y,c1,6,'F');doc.rect(ml+c1,y,c2,6,'F');doc.rect(ml+c1+c2,y,c3,6,'F');
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(7);
+  doc.text('TIPOLOGÍA',ml+1,y+4.2);doc.text('CANT.',ml+c1+1,y+4.2);doc.text('DESCRIPCIÓN GENERAL',ml+c1+c2+1,y+4.2);y+=6;
   MATS.forEach(function(m,idx){
-    np(7); var fill=idx%2===0?[255,255,255]:[245,250,243];
-    bx(ml,y,c1,6,fill); bx(ml+c1,y,c2,6,fill); bx(ml+c1+c2,y,c3,6,fill);
+    np(7);var fl=idx%2===0?[255,255,255]:[245,250,243];
+    bx(ml,y,c1,6,fl);bx(ml+c1,y,c2,6,fl);bx(ml+c1+c2,y,c3,6,fl);
     var md=data.mats&&data.mats[m]?data.mats[m]:{qty:'',desc:''};
-    doc.setTextColor(30,30,30); doc.setFont('helvetica',md.qty||md.desc?'bold':'normal'); doc.setFontSize(7.5); doc.text(m,ml+1,y+4.2);
-    doc.setFont('helvetica','normal'); doc.text(md.qty||'',ml+c1+2,y+4.2);
-    var dl=doc.splitTextToSize(md.desc||'',c3-2); doc.text(dl[0]||'',ml+c1+c2+1,y+4.2); y+=6;
-  });
-  y+=4;
+    doc.setTextColor(30,30,30);doc.setFont('helvetica',md.qty||md.desc?'bold':'normal');doc.setFontSize(7.5);doc.text(m,ml+1,y+4.2);
+    doc.setFont('helvetica','normal');doc.text(md.qty||'',ml+c1+2,y+4.2);
+    doc.text((doc.splitTextToSize(md.desc||'',c3-2))[0]||'',ml+c1+c2+1,y+4.2);y+=6;
+  });y+=4;
 
   // Diagnósticos
-  np(30); y=sec('DESCRIPCIÓN EN DETALLE DE MATERIALES DIAGNÓSTICOS',y)+2;
-  bx(ml,y,cw,25); doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(30,30,30);
-  doc.text(doc.splitTextToSize(data.diagnosticos||'',cw-4),ml+2,y+5); y+=29;
+  np(30);y=sec('DESCRIPCIÓN EN DETALLE DE MATERIALES DIAGNÓSTICOS',y)+2;
+  bx(ml,y,cw,25);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);
+  doc.text(doc.splitTextToSize(data.diagnosticos||'',cw-4),ml+2,y+5);y+=29;
 
   // Emplazamiento
-  np(30); y=sec('EMPLAZAMIENTO DE LA UNIDAD DE RECOLECCIÓN',y)+3;
-  lbl('Emplazamiento:',ml,y+3); tx=ml+30;
-  ['Llanura','Lomaje','Ladera','Quebrada','Cerro','Terraza fluvial'].forEach(function(e){ chk(e,data.emplazamiento&&data.emplazamiento.indexOf(e)>=0,tx,y+3); tx+=28; });
+  np(30);y=sec('EMPLAZAMIENTO DE LA UNIDAD DE RECOLECCIÓN',y)+3;
+  lbl('Emplazamiento:',ml,y+3);tx=ml+30;
+  ['Llanura','Lomaje','Ladera','Quebrada','Cerro','Terraza fluvial'].forEach(function(e){chk(e,data.emplazamiento&&data.emplazamiento.indexOf(e)>=0,tx,y+3);tx+=28;});
   if(data.emplOtro){y+=6;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(30,30,30);doc.text('Otro: '+data.emplOtro,ml,y+3);}
-  y+=9;
-  bx(ml,y,cw,18); lbl('Descripción:',ml+1,y+3);
-  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(30,30,30);
-  doc.text(doc.splitTextToSize(data.emplDesc||'',cw-4),ml+2,y+8); y+=22;
+  y+=9;bx(ml,y,cw,18);lbl('Descripción:',ml+1,y+3);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.emplDesc||'',cw-4),ml+2,y+8);y+=22;
 
   // Conservación
-  np(30); y=sec('ESTADO GENERAL DE CONSERVACIÓN',y)+3;
-  lbl('Estado:',ml,y+3);
-  chk('Bueno',data.conservacion==='Bueno',ml+18,y+3);
-  chk('Regular',data.conservacion==='Regular',ml+45,y+3);
-  chk('Malo',data.conservacion==='Malo',ml+72,y+3); y+=9;
-  bx(ml,y,cw,18); lbl('Descripción:',ml+1,y+3);
-  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(30,30,30);
-  doc.text(doc.splitTextToSize(data.consDesc||'',cw-4),ml+2,y+8); y+=22;
+  np(30);y=sec('ESTADO GENERAL DE CONSERVACIÓN',y)+3;
+  lbl('Estado:',ml,y+3);chk('Bueno',data.conservacion==='Bueno',ml+18,y+3);chk('Regular',data.conservacion==='Regular',ml+45,y+3);chk('Malo',data.conservacion==='Malo',ml+72,y+3);y+=9;
+  bx(ml,y,cw,18);lbl('Descripción:',ml+1,y+3);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.consDesc||'',cw-4),ml+2,y+8);y+=22;
 
   // Responsables
-  np(20); y=sec('RESPONSABLES',y)+2;
-  bx(ml,y,cw/2,7); bx(ml+cw/2,y,cw/4,7); bx(ml+cw*3/4,y,cw/4,7);
-  lbl('RESPONSABLE DE UNIDAD',ml+1,y+3); lbl('FECHA',ml+cw/2+1,y+3); lbl('CAMPAÑA',ml+cw*3/4+1,y+3);
-  val(data.responsable,ml+1,y+6.5,cw/2-3); val(data.fecha,ml+cw/2+1,y+6.5); val(data.campana,ml+cw*3/4+1,y+6.5); y+=7;
-  bx(ml,y,cw,7); lbl('AYUDANTE/ES DE UNIDAD',ml+1,y+3); val(data.ayudantes,ml+1,y+6.5,cw-3); y+=10;
+  np(20);y=sec('RESPONSABLES',y)+2;
+  bx(ml,y,cw/2,7);bx(ml+cw/2,y,cw/4,7);bx(ml+cw*3/4,y,cw/4,7);
+  lbl('RESPONSABLE DE UNIDAD',ml+1,y+3);lbl('FECHA',ml+cw/2+1,y+3);lbl('CAMPAÑA',ml+cw*3/4+1,y+3);
+  val(data.responsable,ml+1,y+6.5,cw/2-3);val(data.fecha,ml+cw/2+1,y+6.5);val(data.campana,ml+cw*3/4+1,y+6.5);y+=7;
+  bx(ml,y,cw,7);lbl('AYUDANTE/ES DE UNIDAD',ml+1,y+3);val(data.ayudantes,ml+1,y+6.5,cw-3);y+=10;
 
   // Observaciones
-  if(data.obs){ np(22); y=sec('OBSERVACIONES',y)+2; bx(ml,y,cw,18); doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.obs,cw-4),ml+2,y+5); y+=22; }
+  if(data.obs){np(22);y=sec('OBSERVACIONES',y)+2;bx(ml,y,cw,18);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.obs,cw-4),ml+2,y+5);y+=22;}
 
-  // Croquis canvas
-  np(15); y=sec('CROQUIS DE DISPERSIÓN DE MATERIAL ARQUEOLÓGICO SUPERFICIAL',y)+4;
-  try{
-    var cq=getCanvasData();
-    doc.addImage(cq,'PNG',ml,y,cw,60,'','MEDIUM');
-    y+=64;
-  }catch(e){ y+=4; }
+  // Croquis
+  np(15);y=sec('CROQUIS DE DISPERSIÓN DE MATERIAL ARQUEOLÓGICO SUPERFICIAL',y)+4;
+  try{doc.addImage(getCanvasData(),'PNG',ml,y,cw,60,'','MEDIUM');y+=64;}catch(e){y+=4;}
 
   // Fotos
   if(data.photos&&data.photos.length){
-    np(15); y=sec('REGISTRO FOTOGRÁFICO',y)+4;
+    np(15);y=sec('REGISTRO FOTOGRÁFICO',y)+4;
     var iw=(cw-4)/2,ih=60;
-    data.photos.forEach(function(p,i){
-      if(i%2===0&&i>0){y+=ih+5;} np(ih+10);
-      var x=ml+(i%2)*(iw+4);
-      try{ doc.addImage(p,'JPEG',x,y,iw,ih,'','MEDIUM'); }
-      catch(e){ bx(x,y,iw,ih,[240,240,240]);doc.setTextColor(150,150,150);doc.setFontSize(8);doc.text('Foto '+(i+1),x+iw/2-5,y+ih/2); }
-    });
+    data.photos.forEach(function(p,i){if(i%2===0&&i>0){y+=ih+5;}np(ih+10);var x=ml+(i%2)*(iw+4);try{doc.addImage(p,'JPEG',x,y,iw,ih,'','MEDIUM');}catch(e){bx(x,y,iw,ih,[240,240,240]);}});
     y+=ih+8;
   }
 
   // Footer
   var total=doc.internal.getNumberOfPages();
-  for(var p=1;p<=total;p++){
-    doc.setPage(p);
-    doc.setDrawColor(58,125,44); doc.setLineWidth(0.5); doc.line(ml,ph-12,pw-mr,ph-12);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,100,100);
+  for(var pg=1;pg<=total;pg++){
+    doc.setPage(pg);doc.setDrawColor(58,125,44);doc.setLineWidth(0.5);doc.line(ml,ph-12,pw-14,ph-12);
+    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100,100,100);
     doc.text('Ambiental y Sectorial  |  Ficha de Recolección Superficial  |  '+(data.proyecto||''),ml,ph-8);
-    doc.text('Página '+p+' de '+total,pw-mr-22,ph-8);
+    doc.text('Página '+pg+' de '+total,pw-36,ph-8);
   }
-
   doc.save('Ficha_'+(data.codigo||'RS')+'_'+(data.sitio||'sin_nombre').replace(/\s+/g,'_')+'_'+data.fecha+'.pdf');
   showToast('📄 PDF exportado correctamente');
 }

@@ -8,6 +8,63 @@
 <title>Fichas Arqueológicas — AyS</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCmhzKOwDpUBUqGl8bble0TSCMZ9K40V7E",
+  authDomain: "fichas-ays.firebaseapp.com",
+  projectId: "fichas-ays",
+  storageBucket: "fichas-ays.firebasestorage.app",
+  messagingSenderId: "631349335008",
+  appId: "1:631349335008:web:711dcc9aec45391d615185"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Habilitar persistencia offline
+enableIndexedDbPersistence(db).catch(function(err){
+  console.log('Offline persistence:', err.code);
+});
+
+// Escuchar cambios en tiempo real
+const fichasRef = collection(db, 'fichas');
+onSnapshot(fichasRef, function(snapshot){
+  fichas = [];
+  snapshot.forEach(function(d){ fichas.push(d.data()); });
+  fichas.sort(function(a,b){ return (b.ts||'').localeCompare(a.ts||''); });
+  localStorage.setItem('fichas_ays', JSON.stringify(fichas));
+  renderFichas();
+  updateSyncStatus(true);
+}, function(err){
+  console.log('Firebase offline, usando cache local');
+  updateSyncStatus(false);
+});
+
+// Exponer funciones Firebase al scope global
+window._fbSave = async function(data){
+  try {
+    await setDoc(doc(db, 'fichas', data.id), data);
+    return true;
+  } catch(e){
+    console.log('Save error:', e);
+    return false;
+  }
+};
+
+window._fbDelete = async function(id){
+  try {
+    await deleteDoc(doc(db, 'fichas', id));
+    return true;
+  } catch(e){
+    return false;
+  }
+};
+
+window._firebaseReady = true;
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--gd:#2d6a1f;--gm:#3a7d2c;--gl:#7ab648;--gp:#e8f5e2;--text:#222}
@@ -16,6 +73,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4ee;color:var(--text
 .logo-box{background:var(--gm);border-radius:10px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0}
 .app-header h1{font-size:15px;font-weight:700;line-height:1.2}
 .app-header p{font-size:11px;opacity:.8}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#aaa;margin-left:auto;flex-shrink:0}
+.sync-dot.online{background:#4caf50}
+.sync-dot.offline{background:#ff9800}
 nav{display:flex;background:var(--gm);overflow-x:auto}
 nav button{flex:1;min-width:60px;padding:11px 6px;border:none;background:none;color:#fff;font-size:12px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;touch-action:manipulation;white-space:nowrap}
 nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
@@ -40,13 +100,9 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 .field textarea{min-height:80px;resize:vertical}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-
-/* TICKET BUTTONS */
 .chk-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 .chk-btn{display:inline-flex;align-items:center;padding:10px 16px;border-radius:20px;border:2px solid #ccc;background:#fff;color:#666;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;transition:all .15s;min-height:44px}
 .chk-btn.on{background:var(--gm);border-color:var(--gm);color:#fff}
-.chk-btn.radio-btn{border-radius:20px}
-
 .mat-table{width:100%;border-collapse:collapse;font-size:13px}
 .mat-table th{background:var(--gm);color:#fff;padding:7px 8px;text-align:left;font-size:11px}
 .mat-table td{padding:5px 6px;border-bottom:1px solid #eee}
@@ -83,8 +139,15 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 .vtx-row{display:grid;grid-template-columns:24px 1fr 1fr 1fr 32px;gap:6px;align-items:center;margin-bottom:6px;font-size:12px}
 .vtx-row span{font-weight:700;color:var(--gd);text-align:center}
 .vtx-row input{padding:6px 8px;border:1.5px solid #ccc;border-radius:6px;font-size:12px;width:100%}
-.vtx-row button{padding:4px;border:none;background:#c0392b;color:#fff;border-radius:6px;cursor:pointer;font-size:12px;touch-action:manipulation}
+.vtx-row button{padding:4px;border:none;background:#c0392b;color:#fff;border-radius:6px;cursor:pointer;font-size:12px}
 .vtx-header{display:grid;grid-template-columns:24px 1fr 1fr 1fr 32px;gap:6px;font-size:11px;font-weight:700;color:#888;margin-bottom:4px;padding:0 2px}
+.sync-banner{padding:8px 16px;font-size:12px;text-align:center;font-weight:600}
+.sync-banner.online{background:#e8f5e2;color:#2d6a1f}
+.sync-banner.offline{background:#fff3cd;color:#856404}
+/* Estructuras */
+.est-row{background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;border:1.5px solid #ddd}
+.est-row-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.est-row-header span{font-weight:700;color:var(--gd);font-size:13px}
 </style>
 </head>
 <body>
@@ -92,12 +155,14 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 <div class="app-header">
   <div class="logo-box">as</div>
   <div><h1>Fichas Arqueológicas</h1><p>Ambiental y Sectorial</p></div>
+  <div class="sync-dot" id="sync-dot" title="Estado de sincronización"></div>
 </div>
+
+<div class="sync-banner offline" id="sync-banner">⏳ Conectando con servidor...</div>
 
 <nav>
   <button id="nav-home" class="active" onclick="showScreen('home')">🗂 Fichas</button>
   <button id="nav-form" onclick="nuevaFicha()">➕ Nueva</button>
-  <button id="nav-sync" onclick="showScreen('sync')">🔄 Sync</button>
   <button id="nav-config" onclick="showScreen('config')">⚙️ Config</button>
 </nav>
 
@@ -128,7 +193,6 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 
   <div class="sec">📋 Identificación General</div>
   <div class="field"><label>Nombre Sitio / Hallazgo *</label><input type="text" id="f-sitio" placeholder="Ej: PFV Pauna Solar SA01"></div>
-  <div class="field"><label>Nombre Unidad</label><input type="text" id="f-unidad" placeholder="Ej: Unidad 1"></div>
   <div class="field"><label>Proyecto</label><input type="text" id="f-proyecto" placeholder="Ej: PFV Pauna Solar"></div>
   <div class="row3">
     <div class="field"><label>Región</label><select id="f-region" onchange="updateProvincias()"><option value="">Seleccionar...</option></select></div>
@@ -161,8 +225,7 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 
   <div class="sec">🏛 Características del Sitio</div>
   <div class="field"><label>Tipo</label><input type="text" id="f-tipo" placeholder="Ej: Estructura tipo plataforma"></div>
-  <div class="field">
-    <label>Tipología Funcional</label>
+  <div class="field"><label>Tipología Funcional</label>
     <div class="chk-group" id="grp-tipologia">
       <button type="button" class="chk-btn" data-group="tipologia" data-value="Doméstico/habitacional">Doméstico/habitacional</button>
       <button type="button" class="chk-btn" data-group="tipologia" data-value="Productivo">Productivo</button>
@@ -173,8 +236,7 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
     </div>
     <input type="text" id="f-tipologia-otro" placeholder="Otro (especificar)" style="margin-top:8px">
   </div>
-  <div class="field">
-    <label>Período</label>
+  <div class="field"><label>Período</label>
     <div class="chk-group" id="grp-periodo">
       <button type="button" class="chk-btn" data-group="periodo" data-value="Prehispánico">Prehispánico</button>
       <button type="button" class="chk-btn" data-group="periodo" data-value="Histórico">Histórico</button>
@@ -184,11 +246,10 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
   </div>
 
   <div class="sec">🔍 Recolección Superficial</div>
-  <div class="field">
-    <label>Tipo de recolección</label>
+  <div class="field"><label>Tipo de recolección</label>
     <div class="chk-group" id="grp-recoleccion">
-      <button type="button" class="chk-btn radio-btn" data-group="recoleccion" data-radio="true" data-value="Decapado (5 cm)">Decapado (5 cm)</button>
-      <button type="button" class="chk-btn radio-btn" data-group="recoleccion" data-radio="true" data-value="Barrido">Barrido</button>
+      <button type="button" class="chk-btn" data-group="recoleccion" data-radio="true" data-value="Decapado (5 cm)">Decapado (5 cm)</button>
+      <button type="button" class="chk-btn" data-group="recoleccion" data-radio="true" data-value="Barrido">Barrido</button>
     </div>
   </div>
   <div class="row3">
@@ -206,9 +267,13 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
   <div class="sec">🔬 Descripción Materiales Diagnósticos</div>
   <div class="field"><textarea id="f-diagnosticos" placeholder="Descripción detallada de materiales diagnósticos..."></textarea></div>
 
+  <!-- ESTRUCTURAS -->
+  <div class="sec">🧱 Registro de Estructuras <span style="font-weight:400;font-size:11px;opacity:.8">(opcional)</span></div>
+  <div id="estructuras-list"></div>
+  <button class="btn btn-outline btn-sm" onclick="addEstructura()" style="margin-top:4px">+ Agregar estructura</button>
+
   <div class="sec">🌄 Emplazamiento</div>
-  <div class="field">
-    <label>Tipo de emplazamiento</label>
+  <div class="field"><label>Tipo de emplazamiento</label>
     <div class="chk-group" id="grp-emplazamiento">
       <button type="button" class="chk-btn" data-group="emplazamiento" data-value="Llanura">Llanura</button>
       <button type="button" class="chk-btn" data-group="emplazamiento" data-value="Lomaje">Lomaje</button>
@@ -222,12 +287,11 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
   <div class="field"><label>Descripción general del emplazamiento</label><textarea id="f-empl-desc" placeholder="Describir el emplazamiento..."></textarea></div>
 
   <div class="sec">📊 Estado de Conservación</div>
-  <div class="field">
-    <label>Estado general</label>
+  <div class="field"><label>Estado general</label>
     <div class="chk-group" id="grp-conservacion">
-      <button type="button" class="chk-btn radio-btn" data-group="conservacion" data-radio="true" data-value="Bueno">✅ Bueno</button>
-      <button type="button" class="chk-btn radio-btn" data-group="conservacion" data-radio="true" data-value="Regular">⚠️ Regular</button>
-      <button type="button" class="chk-btn radio-btn" data-group="conservacion" data-radio="true" data-value="Malo">❌ Malo</button>
+      <button type="button" class="chk-btn" data-group="conservacion" data-radio="true" data-value="Bueno">✅ Bueno</button>
+      <button type="button" class="chk-btn" data-group="conservacion" data-radio="true" data-value="Regular">⚠️ Regular</button>
+      <button type="button" class="chk-btn" data-group="conservacion" data-radio="true" data-value="Malo">❌ Malo</button>
     </div>
   </div>
   <div class="field"><label>Descripción estado de conservación</label><textarea id="f-cons-desc" placeholder="Describir estado de conservación..."></textarea></div>
@@ -268,29 +332,6 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
   </div>
 </div>
 
-<!-- SYNC -->
-<div id="screen-sync" class="screen">
-  <div class="sec">🔄 Respaldo y Sincronización</div>
-  <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.08)">
-    <h3 style="font-size:14px;color:var(--gd);margin-bottom:8px">📤 Exportar respaldo ZIP</h3>
-    <p style="font-size:13px;color:#666;margin-bottom:12px">Descarga todas las fichas con sus fotos y croquis. Compártelo por WhatsApp, email o Drive.</p>
-    <button class="btn btn-primary" onclick="exportZIP()">⬇️ Descargar ZIP</button>
-  </div>
-  <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.08)">
-    <h3 style="font-size:14px;color:var(--gd);margin-bottom:8px">📥 Importar respaldo ZIP</h3>
-    <p style="font-size:13px;color:#666;margin-bottom:12px">Carga un ZIP para sincronizar fichas entre dispositivos del equipo.</p>
-    <input type="file" id="zip-input" accept=".zip" style="display:none" onchange="importZIP(event)">
-    <button class="btn btn-outline" onclick="document.getElementById('zip-input').click()">⬆️ Cargar ZIP</button>
-  </div>
-  <div style="background:var(--gp);border-radius:12px;padding:16px;font-size:13px;color:var(--gd)">
-    <b>💡 Flujo para sincronizar equipo:</b><br><br>
-    1. Arqueólogo A exporta ZIP y lo comparte<br>
-    2. Arqueólogo B importa el ZIP<br>
-    3. Las fichas se combinan sin duplicar<br>
-    4. Cada uno puede seguir agregando fichas nuevas
-  </div>
-</div>
-
 <!-- CONFIG -->
 <div id="screen-config" class="screen">
   <div class="sec">⚙️ Configuración</div>
@@ -303,7 +344,8 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
     Android: Chrome → Menú → "Agregar a pantalla de inicio"
   </div>
   <div style="margin-top:10px;padding:12px;background:var(--gp);border-radius:10px;font-size:12px;color:var(--gd)">
-    <b>Fichas guardadas:</b> <span id="cfg-count"></span> &nbsp;|&nbsp; <b>Versión:</b> 3.0
+    <b>Fichas guardadas:</b> <span id="cfg-count"></span> &nbsp;|&nbsp; <b>Versión:</b> 4.0<br>
+    <b>Sync:</b> <span id="cfg-sync">Conectando...</span>
   </div>
 </div>
 
@@ -311,20 +353,10 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 <div class="modal-overlay" id="modal-del">
   <div class="modal">
     <h3>⚠️ Eliminar ficha</h3>
-    <p>¿Seguro que deseas eliminar esta ficha? No se puede deshacer.</p>
+    <p>¿Seguro que deseas eliminar esta ficha? Se eliminará para todos los usuarios.</p>
     <div class="modal-actions">
       <button class="btn btn-danger" onclick="confirmDelete()">Eliminar</button>
       <button class="btn btn-outline" onclick="closeModal('modal-del')">Cancelar</button>
-    </div>
-  </div>
-</div>
-<div class="modal-overlay" id="modal-import">
-  <div class="modal">
-    <h3>📥 Importar fichas</h3>
-    <p id="modal-import-msg"></p>
-    <div class="modal-actions">
-      <button class="btn btn-primary" onclick="confirmImport()">Importar</button>
-      <button class="btn btn-outline" onclick="closeModal('modal-import')">Cancelar</button>
     </div>
   </div>
 </div>
@@ -335,8 +367,9 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 var CHILE = {"Arica y Parinacota":{"Arica":["Arica","Camarones"],"Parinacota":["Putre","General Lagos"]},"Tarapacá":{"Tarapacá":["Iquique","Alto Hospicio"],"El Tamarugal":["Pozo Almonte","Camiña","Colchane","Huara","Pica"]},"Antofagasta":{"Antofagasta":["Antofagasta","Mejillones","Sierra Gorda","Taltal"],"El Loa":["Calama","Ollagüe","San Pedro de Atacama"],"Tocopilla":["Tocopilla","María Elena"]},"Atacama":{"Copiapó":["Copiapó","Caldera","Tierra Amarilla"],"Chañaral":["Chañaral","Diego de Almagro"],"Huasco":["Vallenar","Alto del Carmen","Freirina","Huasco"]},"Coquimbo":{"Elqui":["La Serena","Coquimbo","Andacollo","La Higuera","Paiguano","Vicuña"],"Choapa":["Illapel","Canela","Los Vilos","Salamanca"],"Limarí":["Ovalle","Combarbalá","Monte Patria","Punitaqui","Río Hurtado"]},"Valparaíso":{"Valparaíso":["Valparaíso","Casablanca","Concón","Juan Fernández","Puchuncaví","Quintero","Viña del Mar"],"Isla de Pascua":["Isla de Pascua"],"Los Andes":["Los Andes","Calle Larga","Rinconada","San Esteban"],"Petorca":["La Ligua","Cabildo","Papudo","Petorca","Zapallar"],"Quillota":["Quillota","Calera","Hijuelas","La Cruz","Nogales"],"San Antonio":["San Antonio","Algarrobo","Cartagena","El Quisco","El Tabo","Santo Domingo"],"San Felipe de Aconcagua":["San Felipe","Catemu","Llaillay","Panquehue","Putaendo","Santa María"],"Marga Marga":["Quilpué","Limache","Olmué","Villa Alemana"]},"Metropolitana":{"Santiago":["Santiago","Cerrillos","Cerro Navia","Conchalí","El Bosque","Estación Central","Huechuraba","Independencia","La Cisterna","La Florida","La Granja","La Pintana","La Reina","Las Condes","Lo Barnechea","Lo Espejo","Lo Prado","Macul","Maipú","Ñuñoa","Pedro Aguirre Cerda","Peñalolén","Providencia","Pudahuel","Quilicura","Quinta Normal","Recoleta","Renca","San Joaquín","San Miguel","San Ramón","Vitacura"],"Cordillera":["Puente Alto","Pirque","San José de Maipo"],"Chacabuco":["Colina","Lampa","Til Til"],"Maipo":["San Bernardo","Buin","Calera de Tango","Paine"],"Melipilla":["Melipilla","Alhué","Curacaví","María Pinto","San Pedro"],"Talagante":["Talagante","El Monte","Isla de Maipo","Padre Hurtado","Peñaflor"]},"O'Higgins":{"Cachapoal":["Rancagua","Codegua","Coinco","Coltauco","Doñihue","Graneros","Las Cabras","Machalí","Malloa","Mostazal","Olivar","Peumo","Pichidegua","Quinta de Tilcoco","Rengo","Requínoa","San Vicente"],"Cardenal Caro":["Pichilemu","La Estrella","Litueche","Marchigüe","Navidad","Paredones"],"Colchagua":["San Fernando","Chépica","Chimbarongo","Lolol","Nancagua","Palmilla","Peralillo","Placilla","Pumanque","Santa Cruz"]},"Maule":{"Talca":["Talca","Constitución","Curepto","Empedrado","Maule","Pelarco","Pencahue","Río Claro","San Clemente","San Rafael"],"Cauquenes":["Cauquenes","Chanco","Pelluhue"],"Curicó":["Curicó","Hualañé","Licantén","Molina","Rauco","Romeral","Sagrada Familia","Teno","Vichuquén"],"Linares":["Linares","Colbún","Longaví","Parral","Retiro","San Javier","Villa Alegre","Yerbas Buenas"]},"Ñuble":{"Diguillín":["Chillán","Bulnes","Chillán Viejo","El Carmen","Pemuco","Pinto","Quillón","San Ignacio","Yungay"],"Itata":["Quirihue","Cobquecura","Coelemu","Ninhue","Portezuelo","Ránquil","Treguaco"],"Punilla":["San Carlos","Coihueco","Ñiquén","San Fabián","San Nicolás"]},"Biobío":{"Concepción":["Concepción","Coronel","Chiguayante","Florida","Hualqui","Lota","Penco","San Pedro de la Paz","Santa Juana","Talcahuano","Tomé","Hualpén"],"Arauco":["Lebu","Arauco","Cañete","Contulmo","Curanilahue","Los Álamos","Tirúa"],"Biobío":["Los Ángeles","Antuco","Cabrero","Laja","Mulchén","Nacimiento","Negrete","Quilaco","Quilleco","San Rosendo","Santa Bárbara","Tucapel","Yumbel"]},"La Araucanía":{"Cautín":["Temuco","Carahue","Cunco","Curarrehue","Freire","Galvarino","Gorbea","Lautaro","Loncoche","Melipeuco","Nueva Imperial","Padre las Casas","Perquenco","Pitrufquén","Pucón","Saavedra","Teodoro Schmidt","Toltén","Vilcún","Villarrica","Cholchol"],"Malleco":["Angol","Collipulli","Curacautín","Ercilla","Lonquimay","Los Sauces","Lumaco","Purén","Renaico","Traiguén","Victoria"]},"Los Ríos":{"Valdivia":["Valdivia","Corral","Futrono","La Unión","Lago Ranco","Lanco","Los Lagos","Máfil","Mariquina","Paillaco","Panguipulli","Río Bueno"]},"Los Lagos":{"Llanquihue":["Puerto Montt","Calbuco","Cochamó","Fresia","Frutillar","Los Muermos","Llanquihue","Maullín","Puerto Varas"],"Chiloé":["Castro","Ancud","Chonchi","Curaco de Vélez","Dalcahue","Puqueldón","Queilén","Quellón","Quemchi","Quinchao"],"Osorno":["Osorno","Puerto Octay","Purranque","Puyehue","Río Negro","San Juan de la Costa","San Pablo"],"Palena":["Chaitén","Futaleufú","Hualaihué","Palena"]},"Aysén":{"Coyhaique":["Coyhaique","Lago Verde"],"Aysén":["Aysén","Cisnes","Guaitecas"],"Capitán Prat":["Cochrane","O'Higgins","Tortel"],"General Carrera":["Chile Chico","Río Ibáñez"]},"Magallanes":{"Magallanes":["Punta Arenas","Laguna Blanca","Río Verde","San Gregorio"],"Antártica Chilena":["Cabo de Hornos","Antártica"],"Tierra del Fuego":["Porvenir","Primavera","Timaukel"],"Última Esperanza":["Natales","Torres del Paine"]}};
 
 var MATS = ['Cerámica','Lítico','Osteofauna','Loza','Porcelana','Gres','Vidrio','Metal','Malacológico','Textil','Cuero'];
-var fichas=[], currentId=null, photos=[], cfg={}, vertices=[], pendingImport=null;
+var fichas=[], currentId=null, photos=[], cfg={}, vertices=[], estructuras=[];
 var drawTool='pen', isDrawing=false, lastX=0, lastY=0, startX=0, startY=0, snapshot=null;
+var isOnline=false;
 
 function init(){
   try{fichas=JSON.parse(localStorage.getItem('fichas_ays')||'[]');}catch(e){fichas=[];}
@@ -344,120 +377,75 @@ function init(){
   buildMats(); loadCfg(); populateRegiones(); renderFichas(); renderPhotos(); setToday(); initCanvas(); initChkBtns();
 }
 
+function updateSyncStatus(online){
+  isOnline=online;
+  var dot=document.getElementById('sync-dot');
+  var banner=document.getElementById('sync-banner');
+  var cfgSync=document.getElementById('cfg-sync');
+  if(online){
+    dot.className='sync-dot online';
+    banner.className='sync-banner online';
+    banner.textContent='🟢 Sincronizado — los cambios se comparten en tiempo real';
+    if(cfgSync) cfgSync.textContent='En línea ✅';
+  } else {
+    dot.className='sync-dot offline';
+    banner.className='sync-banner offline';
+    banner.textContent='🟡 Sin conexión — trabajando offline, se sincronizará al reconectar';
+    if(cfgSync) cfgSync.textContent='Sin conexión ⚠️';
+  }
+}
+
 function pad(n){return String(n).padStart(2,'0');}
 function setToday(){var d=new Date();document.getElementById('f-fecha').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function loadCfg(){if(cfg.proyecto)document.getElementById('cfg-proyecto').value=cfg.proyecto;if(cfg.resp)document.getElementById('cfg-resp').value=cfg.resp;if(cfg.campana)document.getElementById('cfg-campana').value=cfg.campana;}
+function saveConfig(){cfg.proyecto=document.getElementById('cfg-proyecto').value;cfg.resp=document.getElementById('cfg-resp').value;cfg.campana=document.getElementById('cfg-campana').value;localStorage.setItem('cfg_ays',JSON.stringify(cfg));showToast('Configuración guardada');}
 
-function loadCfg(){
-  if(cfg.proyecto) document.getElementById('cfg-proyecto').value=cfg.proyecto;
-  if(cfg.resp) document.getElementById('cfg-resp').value=cfg.resp;
-  if(cfg.campana) document.getElementById('cfg-campana').value=cfg.campana;
-}
-function saveConfig(){
-  cfg.proyecto=document.getElementById('cfg-proyecto').value;
-  cfg.resp=document.getElementById('cfg-resp').value;
-  cfg.campana=document.getElementById('cfg-campana').value;
-  localStorage.setItem('cfg_ays',JSON.stringify(cfg));
-  showToast('Configuración guardada');
-}
-
-// ─── CHK BUTTONS ──────────────────────────────────────────────────────
+// CHK BUTTONS
 function initChkBtns(){
   document.querySelectorAll('.chk-btn').forEach(function(btn){
     btn.addEventListener('click',function(e){
       e.preventDefault();
       var isRadio=btn.getAttribute('data-radio')==='true';
       var group=btn.getAttribute('data-group');
-      if(isRadio){
-        document.querySelectorAll('.chk-btn[data-group="'+group+'"]').forEach(function(b){ b.classList.remove('on'); });
-        btn.classList.add('on');
-      } else {
-        btn.classList.toggle('on');
-      }
+      if(isRadio){document.querySelectorAll('.chk-btn[data-group="'+group+'"]').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');}
+      else{btn.classList.toggle('on');}
     });
   });
 }
+function getChkValues(group){var v=[];document.querySelectorAll('.chk-btn[data-group="'+group+'"].on').forEach(function(b){v.push(b.getAttribute('data-value'));});return v;}
+function getRadioValue(group){var b=document.querySelector('.chk-btn[data-group="'+group+'"].on');return b?b.getAttribute('data-value'):'';}
+function setChkValues(group,vals){if(!vals)return;document.querySelectorAll('.chk-btn[data-group="'+group+'"]').forEach(function(b){b.classList.toggle('on',vals.indexOf(b.getAttribute('data-value'))>=0);});}
+function setRadioValue(group,val){document.querySelectorAll('.chk-btn[data-group="'+group+'"]').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-value')===val);});}
+function clearAllChk(){document.querySelectorAll('.chk-btn').forEach(function(b){b.classList.remove('on');});}
 
-function getChkValues(group){
-  var vals=[];
-  document.querySelectorAll('.chk-btn[data-group="'+group+'"].on').forEach(function(b){ vals.push(b.getAttribute('data-value')); });
-  return vals;
-}
-function getRadioValue(group){
-  var btn=document.querySelector('.chk-btn[data-group="'+group+'"].on');
-  return btn?btn.getAttribute('data-value'):'';
-}
-function setChkValues(group,vals){
-  if(!vals) return;
-  document.querySelectorAll('.chk-btn[data-group="'+group+'"]').forEach(function(b){
-    b.classList.toggle('on', vals.indexOf(b.getAttribute('data-value'))>=0);
-  });
-}
-function setRadioValue(group,val){
-  document.querySelectorAll('.chk-btn[data-group="'+group+'"]').forEach(function(b){
-    b.classList.toggle('on', b.getAttribute('data-value')===val);
-  });
-}
-function clearAllChk(){
-  document.querySelectorAll('.chk-btn').forEach(function(b){ b.classList.remove('on'); });
-}
+// REGIONES
+function populateRegiones(){var s=document.getElementById('f-region'),f=document.getElementById('filter-region');Object.keys(CHILE).forEach(function(r){var o=document.createElement('option');o.value=r;o.textContent=r;s.appendChild(o);var o2=document.createElement('option');o2.value=r;o2.textContent=r;f.appendChild(o2);});}
+function updateProvincias(){var r=document.getElementById('f-region').value,p=document.getElementById('f-provincia'),c=document.getElementById('f-comuna');p.innerHTML='<option value="">Seleccionar...</option>';c.innerHTML='<option value="">Seleccionar...</option>';if(!r||!CHILE[r])return;Object.keys(CHILE[r]).forEach(function(pv){var o=document.createElement('option');o.value=pv;o.textContent=pv;p.appendChild(o);});}
+function updateComunas(){var r=document.getElementById('f-region').value,p=document.getElementById('f-provincia').value,c=document.getElementById('f-comuna');c.innerHTML='<option value="">Seleccionar...</option>';if(!r||!p||!CHILE[r]||!CHILE[r][p])return;CHILE[r][p].forEach(function(cm){var o=document.createElement('option');o.value=cm;o.textContent=cm;c.appendChild(o);});}
+function setRegion(r,p,c){document.getElementById('f-region').value=r||'';updateProvincias();if(p){document.getElementById('f-provincia').value=p;updateComunas();}if(c)document.getElementById('f-comuna').value=c;}
 
-// ─── REGIONES ─────────────────────────────────────────────────────────
-function populateRegiones(){
-  var sel=document.getElementById('f-region');
-  var filt=document.getElementById('filter-region');
-  Object.keys(CHILE).forEach(function(r){
-    var o=document.createElement('option');o.value=r;o.textContent=r;sel.appendChild(o);
-    var o2=document.createElement('option');o2.value=r;o2.textContent=r;filt.appendChild(o2);
-  });
-}
-function updateProvincias(){
-  var r=document.getElementById('f-region').value;
-  var pSel=document.getElementById('f-provincia');
-  var cSel=document.getElementById('f-comuna');
-  pSel.innerHTML='<option value="">Seleccionar...</option>';
-  cSel.innerHTML='<option value="">Seleccionar...</option>';
-  if(!r||!CHILE[r]) return;
-  Object.keys(CHILE[r]).forEach(function(p){var o=document.createElement('option');o.value=p;o.textContent=p;pSel.appendChild(o);});
-}
-function updateComunas(){
-  var r=document.getElementById('f-region').value;
-  var p=document.getElementById('f-provincia').value;
-  var cSel=document.getElementById('f-comuna');
-  cSel.innerHTML='<option value="">Seleccionar...</option>';
-  if(!r||!p||!CHILE[r]||!CHILE[r][p]) return;
-  CHILE[r][p].forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;cSel.appendChild(o);});
-}
-function setRegion(r,p,c){
-  document.getElementById('f-region').value=r||'';
-  updateProvincias();
-  if(p){document.getElementById('f-provincia').value=p;updateComunas();}
-  if(c) document.getElementById('f-comuna').value=c;
-}
-
-// ─── NAV ──────────────────────────────────────────────────────────────
+// NAV
 function showScreen(name){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.querySelectorAll('nav button').forEach(function(b){b.classList.remove('active');});
   document.getElementById('screen-'+name).classList.add('active');
   document.getElementById('nav-'+name).classList.add('active');
-  if(name==='home') renderFichas();
-  if(name==='config') document.getElementById('cfg-count').textContent=fichas.length+' fichas';
+  if(name==='home')renderFichas();
+  if(name==='config')document.getElementById('cfg-count').textContent=fichas.length+' fichas';
 }
 
 function nuevaFicha(){
-  currentId=null; photos=[]; vertices=[];
+  currentId=null;photos=[];vertices=[];estructuras=[];
   document.querySelectorAll('#screen-form input:not([type=file]):not([type=hidden])').forEach(function(el){el.value='';});
   document.querySelectorAll('#screen-form textarea').forEach(function(el){el.value='';});
   document.querySelectorAll('#screen-form select').forEach(function(el){el.selectedIndex=0;});
-  updateProvincias(); updateComunas();
-  clearAllChk(); buildMats(); renderPhotos(); renderVertices(); setToday(); clearCanvas();
-  if(cfg.proyecto) document.getElementById('f-proyecto').value=cfg.proyecto;
-  if(cfg.resp) document.getElementById('f-responsable').value=cfg.resp;
-  if(cfg.campana) document.getElementById('f-campana').value=cfg.campana;
+  updateProvincias();updateComunas();clearAllChk();buildMats();renderPhotos();renderVertices();renderEstructuras();setToday();clearCanvas();
+  if(cfg.proyecto)document.getElementById('f-proyecto').value=cfg.proyecto;
+  if(cfg.resp)document.getElementById('f-responsable').value=cfg.resp;
+  if(cfg.campana)document.getElementById('f-campana').value=cfg.campana;
   document.getElementById('gps-coords').textContent='Sin coordenadas aún';
   document.getElementById('gps-status').textContent='';
-  document.getElementById('f-lat').value='';
-  document.getElementById('f-lon').value='';
+  document.getElementById('f-lat').value='';document.getElementById('f-lon').value='';
   document.getElementById('btn-pdf').style.display='none';
   document.getElementById('btn-del').style.display='none';
   document.getElementById('form-title').textContent='Nueva Ficha';
@@ -465,31 +453,53 @@ function nuevaFicha(){
   showScreen('form');
 }
 
-// ─── VÉRTICES ─────────────────────────────────────────────────────────
+// VÉRTICES
 function addVertice(){vertices.push({ubicacion:'Dentro del AI',n:'',e:''});renderVertices();}
 function removeVertice(i){vertices.splice(i,1);renderVertices();}
 function renderVertices(){
   var html='';
   vertices.forEach(function(v,i){
-    html+='<div class="vtx-row"><span>'+(i+1)+'</span>';
-    html+='<input type="text" value="'+v.ubicacion+'" onchange="vertices['+i+'].ubicacion=this.value" placeholder="Ubicación">';
-    html+='<input type="text" value="'+v.n+'" onchange="vertices['+i+'].n=this.value" placeholder="Norte">';
-    html+='<input type="text" value="'+v.e+'" onchange="vertices['+i+'].e=this.value" placeholder="Este">';
-    html+='<button onclick="removeVertice('+i+')">✕</button></div>';
+    html+='<div class="vtx-row"><span>'+(i+1)+'</span><input type="text" value="'+v.ubicacion+'" onchange="vertices['+i+'].ubicacion=this.value" placeholder="Ubicación"><input type="text" value="'+v.n+'" onchange="vertices['+i+'].n=this.value" placeholder="Norte"><input type="text" value="'+v.e+'" onchange="vertices['+i+'].e=this.value" placeholder="Este"><button onclick="removeVertice('+i+')">✕</button></div>';
   });
   document.getElementById('vtx-list').innerHTML=html;
 }
 
-// ─── MATERIALES ───────────────────────────────────────────────────────
-function buildMats(){
+// ESTRUCTURAS
+function addEstructura(){
+  estructuras.push({nombre:'',largo:'',ancho:'',alto:'',forma:'',materialidad:'',hileras:'',hiladas:'',vanos:'',obs:''});
+  renderEstructuras();
+}
+function removeEstructura(i){estructuras.splice(i,1);renderEstructuras();}
+function renderEstructuras(){
   var html='';
-  MATS.forEach(function(m){
-    html+='<tr><td><b>'+m+'</b></td><td><input type="number" min="0" id="mq-'+m+'" placeholder="0" style="width:60px"></td><td><input type="text" id="md-'+m+'" placeholder="Descripción..."></td></tr>';
+  estructuras.forEach(function(e,i){
+    html+='<div class="est-row">';
+    html+='<div class="est-row-header"><span>🧱 Estructura '+(i+1)+'</span><button class="btn btn-danger btn-sm" onclick="removeEstructura('+i+')">✕ Eliminar</button></div>';
+    html+='<div class="field"><label>Nombre / ID estructura</label><input type="text" value="'+(e.nombre||'')+'" onchange="estructuras['+i+'].nombre=this.value" placeholder="Ej: E1, Muro norte..."></div>';
+    html+='<div class="row3">';
+    html+='<div class="field"><label>Largo (m)</label><input type="number" step="any" value="'+(e.largo||'')+'" onchange="estructuras['+i+'].largo=this.value" placeholder="0.00"></div>';
+    html+='<div class="field"><label>Ancho (m)</label><input type="number" step="any" value="'+(e.ancho||'')+'" onchange="estructuras['+i+'].ancho=this.value" placeholder="0.00"></div>';
+    html+='<div class="field"><label>Alto (m)</label><input type="number" step="any" value="'+(e.alto||'')+'" onchange="estructuras['+i+'].alto=this.value" placeholder="0.00"></div>';
+    html+='</div>';
+    html+='<div class="row2">';
+    html+='<div class="field"><label>Forma</label><select onchange="estructuras['+i+'].forma=this.value"><option value="">Seleccionar...</option><option'+(e.forma==='Rectangular'?' selected':'')+'>Rectangular</option><option'+(e.forma==='Circular'?' selected':'')+'>Circular</option><option'+(e.forma==='Semicircular'?' selected':'')+'>Semicircular</option><option'+(e.forma==='Irregular'?' selected':'')+'>Irregular</option><option'+(e.forma==='Cuadrangular'?' selected':'')+'>Cuadrangular</option><option'+(e.forma==='Otra'?' selected':'')+'>Otra</option></select></div>';
+    html+='<div class="field"><label>Materialidad</label><select onchange="estructuras['+i+'].materialidad=this.value"><option value="">Seleccionar...</option><option'+(e.materialidad==='Piedra seca'?' selected':'')+'>Piedra seca</option><option'+(e.materialidad==='Piedra con barro'?' selected':'')+'>Piedra con barro</option><option'+(e.materialidad==='Adobe'?' selected':'')+'>Adobe</option><option'+(e.materialidad==='Tapia'?' selected':'')+'>Tapia</option><option'+(e.materialidad==='Mixta'?' selected':'')+'>Mixta</option><option'+(e.materialidad==='Otra'?' selected':'')+'>Otra</option></select></div>';
+    html+='</div>';
+    html+='<div class="row3">';
+    html+='<div class="field"><label>N° Hileras</label><input type="number" min="0" value="'+(e.hileras||'')+'" onchange="estructuras['+i+'].hileras=this.value" placeholder="0"></div>';
+    html+='<div class="field"><label>N° Hiladas</label><input type="number" min="0" value="'+(e.hiladas||'')+'" onchange="estructuras['+i+'].hiladas=this.value" placeholder="0"></div>';
+    html+='<div class="field"><label>Vanos</label><input type="number" min="0" value="'+(e.vanos||'')+'" onchange="estructuras['+i+'].vanos=this.value" placeholder="0"></div>';
+    html+='</div>';
+    html+='<div class="field"><label>Observaciones estructura</label><textarea onchange="estructuras['+i+'].obs=this.value" placeholder="Descripción adicional de la estructura...">'+(e.obs||'')+'</textarea></div>';
+    html+='</div>';
   });
-  document.getElementById('mat-body').innerHTML=html;
+  document.getElementById('estructuras-list').innerHTML=html;
 }
 
-// ─── GPS ──────────────────────────────────────────────────────────────
+// MATERIALES
+function buildMats(){var h='';MATS.forEach(function(m){h+='<tr><td><b>'+m+'</b></td><td><input type="number" min="0" id="mq-'+m+'" placeholder="0" style="width:60px"></td><td><input type="text" id="md-'+m+'" placeholder="Descripción..."></td></tr>';});document.getElementById('mat-body').innerHTML=h;}
+
+// GPS
 function getGPS(){
   var status=document.getElementById('gps-status'),coords=document.getElementById('gps-coords'),btn=document.getElementById('btn-gps');
   if(!navigator.geolocation){status.textContent='GPS no disponible';return;}
@@ -499,15 +509,7 @@ function getGPS(){
   watchId=navigator.geolocation.watchPosition(function(pos){
     var lat=pos.coords.latitude,lon=pos.coords.longitude,acc=pos.coords.accuracy,alt=pos.coords.altitude;
     attempts++;status.textContent='Lectura '+attempts+'/8 — precisión: ±'+Math.round(acc)+' m';
-    if(acc<bestAcc){
-      bestAcc=acc;
-      document.getElementById('f-lat').value=lat.toFixed(6);document.getElementById('f-lon').value=lon.toFixed(6);
-      if(alt)document.getElementById('f-altitud').value=Math.round(alt);
-      document.getElementById('f-error').value=Math.round(acc);
-      var utm=toUTM(lat,lon);
-      document.getElementById('f-utmn').value=Math.round(utm.N);document.getElementById('f-utme').value=Math.round(utm.E);document.getElementById('f-huso').value=utm.zone;
-      coords.textContent='UTM N: '+Math.round(utm.N)+'  E: '+Math.round(utm.E)+'  Huso: '+utm.zone;
-    }
+    if(acc<bestAcc){bestAcc=acc;document.getElementById('f-lat').value=lat.toFixed(6);document.getElementById('f-lon').value=lon.toFixed(6);if(alt)document.getElementById('f-altitud').value=Math.round(alt);document.getElementById('f-error').value=Math.round(acc);var utm=toUTM(lat,lon);document.getElementById('f-utmn').value=Math.round(utm.N);document.getElementById('f-utme').value=Math.round(utm.E);document.getElementById('f-huso').value=utm.zone;coords.textContent='UTM N: '+Math.round(utm.N)+'  E: '+Math.round(utm.E)+'  Huso: '+utm.zone;}
     if(acc<=5||attempts>=8){done();status.textContent='✅ Precisión final: ±'+Math.round(bestAcc)+' m';}
   },function(err){done();status.textContent='❌ '+err.message;},{enableHighAccuracy:true,timeout:20000,maximumAge:0});
   timeout=setTimeout(function(){done();status.textContent=bestAcc<Infinity?'✅ Mejor precisión: ±'+Math.round(bestAcc)+' m':'⏱ Sin señal GPS.';},25000);
@@ -525,31 +527,15 @@ function toUTM(lat,lon){
   var Nn=k0*(M+N*Math.tan(phi)*(A*A/2+(5-T+9*C+4*C*C)*A*A*A*A/24+(61-58*T+T*T+600*C)*A*A*A*A*A*A/720))+N0;
   return {E:E,N:Nn,zone:zone+(lat>=0?'':'S')};
 }
+function calcArea(){var l=parseFloat(document.getElementById('f-largo').value)||0,a=parseFloat(document.getElementById('f-ancho').value)||0;if(l&&a)document.getElementById('f-area').value=(l*a).toFixed(2);}
 
-function calcArea(){
-  var l=parseFloat(document.getElementById('f-largo').value)||0,a=parseFloat(document.getElementById('f-ancho').value)||0;
-  if(l&&a)document.getElementById('f-area').value=(l*a).toFixed(2);
-}
-
-// ─── CANVAS ───────────────────────────────────────────────────────────
+// CANVAS
 function initCanvas(){
   var canvas=document.getElementById('croquis-canvas'),ctx=canvas.getContext('2d');
   ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
-  function getPos(e){
-    var r=canvas.getBoundingClientRect(),scaleX=canvas.width/r.width,scaleY=canvas.height/r.height;
-    var src=e.touches?e.touches[0]:e;
-    return {x:(src.clientX-r.left)*scaleX,y:(src.clientY-r.top)*scaleY};
-  }
+  function getPos(e){var r=canvas.getBoundingClientRect(),sx=canvas.width/r.width,sy=canvas.height/r.height,src=e.touches?e.touches[0]:e;return{x:(src.clientX-r.left)*sx,y:(src.clientY-r.top)*sy};}
   function start(e){e.preventDefault();isDrawing=true;var p=getPos(e);lastX=p.x;lastY=p.y;startX=p.x;startY=p.y;if(drawTool==='line')snapshot=ctx.getImageData(0,0,canvas.width,canvas.height);}
-  function move(e){
-    e.preventDefault();if(!isDrawing)return;
-    var p=getPos(e),color=document.getElementById('draw-color').value,size=parseInt(document.getElementById('draw-size').value);
-    ctx.lineJoin='round';ctx.lineCap='round';
-    if(drawTool==='pen'){ctx.strokeStyle=color;ctx.lineWidth=size;ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);ctx.stroke();}
-    else if(drawTool==='eraser'){ctx.strokeStyle='#fff';ctx.lineWidth=size*4;ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);ctx.stroke();}
-    else if(drawTool==='line'){ctx.putImageData(snapshot,0,0);ctx.strokeStyle=color;ctx.lineWidth=size;ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(p.x,p.y);ctx.stroke();}
-    lastX=p.x;lastY=p.y;
-  }
+  function move(e){e.preventDefault();if(!isDrawing)return;var p=getPos(e),color=document.getElementById('draw-color').value,size=parseInt(document.getElementById('draw-size').value);ctx.lineJoin='round';ctx.lineCap='round';if(drawTool==='pen'){ctx.strokeStyle=color;ctx.lineWidth=size;ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);ctx.stroke();}else if(drawTool==='eraser'){ctx.strokeStyle='#fff';ctx.lineWidth=size*4;ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);ctx.stroke();}else if(drawTool==='line'){ctx.putImageData(snapshot,0,0);ctx.strokeStyle=color;ctx.lineWidth=size;ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(p.x,p.y);ctx.stroke();}lastX=p.x;lastY=p.y;}
   function end(e){e.preventDefault();isDrawing=false;}
   canvas.addEventListener('mousedown',start);canvas.addEventListener('mousemove',move);canvas.addEventListener('mouseup',end);
   canvas.addEventListener('touchstart',start,{passive:false});canvas.addEventListener('touchmove',move,{passive:false});canvas.addEventListener('touchend',end,{passive:false});
@@ -559,29 +545,20 @@ function clearCanvas(){var c=document.getElementById('croquis-canvas'),ctx=c.get
 function getCanvasData(){return document.getElementById('croquis-canvas').toDataURL('image/png');}
 function loadCanvasData(data){if(!data)return;var c=document.getElementById('croquis-canvas'),ctx=c.getContext('2d'),img=new Image();img.onload=function(){ctx.drawImage(img,0,0);};img.src=data;}
 
-// ─── PHOTOS ───────────────────────────────────────────────────────────
-function addPhoto(e){
-  Array.from(e.target.files).forEach(function(f){var r=new FileReader();r.onload=function(ev){photos.push(ev.target.result);renderPhotos();};r.readAsDataURL(f);});
-  e.target.value='';
-}
-function renderPhotos(){
-  var html=photos.map(function(p,i){return '<div class="photo-thumb"><img src="'+p+'"><button class="del-photo" onclick="removePhoto('+i+')">×</button></div>';}).join('');
-  html+='<label class="add-photo-btn" for="photo-input"><span style="font-size:28px">📷</span><span>Agregar</span></label>';
-  document.getElementById('photos-grid').innerHTML=html;
-}
+// PHOTOS
+function addPhoto(e){Array.from(e.target.files).forEach(function(f){var r=new FileReader();r.onload=function(ev){photos.push(ev.target.result);renderPhotos();};r.readAsDataURL(f);});e.target.value='';}
+function renderPhotos(){var h=photos.map(function(p,i){return '<div class="photo-thumb"><img src="'+p+'"><button class="del-photo" onclick="removePhoto('+i+')">×</button></div>';}).join('');h+='<label class="add-photo-btn" for="photo-input"><span style="font-size:28px">📷</span><span>Agregar</span></label>';document.getElementById('photos-grid').innerHTML=h;}
 function removePhoto(i){photos.splice(i,1);renderPhotos();}
 
-// ─── FORM ─────────────────────────────────────────────────────────────
+// FORM
 function nextId(){var max=0;fichas.forEach(function(f){if(f.codigo){var n=parseInt(f.codigo.replace('RS-',''));if(n>max)max=n;}});return 'RS-'+String(max+1).padStart(3,'0');}
 
 function getForm(){
-  var mats={};
-  MATS.forEach(function(m){var q=document.getElementById('mq-'+m),d=document.getElementById('md-'+m);mats[m]={qty:q?q.value:'',desc:d?d.value:''};});
+  var mats={};MATS.forEach(function(m){var q=document.getElementById('mq-'+m),d=document.getElementById('md-'+m);mats[m]={qty:q?q.value:'',desc:d?d.value:''};});
   return {
     id:currentId||String(Date.now()),
     codigo:document.getElementById('ficha-id-badge').textContent||nextId(),
     sitio:document.getElementById('f-sitio').value,
-    unidad:document.getElementById('f-unidad').value,
     proyecto:document.getElementById('f-proyecto').value,
     region:document.getElementById('f-region').value,
     provincia:document.getElementById('f-provincia').value,
@@ -605,6 +582,7 @@ function getForm(){
     area:document.getElementById('f-area').value,
     mats:mats,
     diagnosticos:document.getElementById('f-diagnosticos').value,
+    estructuras:estructuras,
     emplazamiento:getChkValues('emplazamiento'),
     emplOtro:document.getElementById('f-empl-otro').value,
     emplDesc:document.getElementById('f-empl-desc').value,
@@ -623,56 +601,51 @@ function getForm(){
 
 function setForm(d){
   document.getElementById('f-sitio').value=d.sitio||'';
-  document.getElementById('f-unidad').value=d.unidad||'';
   document.getElementById('f-proyecto').value=d.proyecto||'';
   setRegion(d.region,d.provincia,d.comuna);
-  document.getElementById('f-lat').value=d.lat||'';
-  document.getElementById('f-lon').value=d.lon||'';
-  document.getElementById('f-utmn').value=d.utmN||'';
-  document.getElementById('f-utme').value=d.utmE||'';
-  document.getElementById('f-huso').value=d.huso||'';
-  document.getElementById('f-error').value=d.error||'';
-  document.getElementById('f-altitud').value=d.altitud||'';
+  document.getElementById('f-lat').value=d.lat||'';document.getElementById('f-lon').value=d.lon||'';
+  document.getElementById('f-utmn').value=d.utmN||'';document.getElementById('f-utme').value=d.utmE||'';document.getElementById('f-huso').value=d.huso||'';
+  document.getElementById('f-error').value=d.error||'';document.getElementById('f-altitud').value=d.altitud||'';
   vertices=d.vertices||[];renderVertices();
   document.getElementById('f-tipo').value=d.tipo||'';
-  setChkValues('tipologia',d.tipologia);
-  document.getElementById('f-tipologia-otro').value=d.tipologiaOtro||'';
-  setChkValues('periodo',d.periodo);
-  document.getElementById('f-periodo-esp').value=d.periodoEsp||'';
+  setChkValues('tipologia',d.tipologia);document.getElementById('f-tipologia-otro').value=d.tipologiaOtro||'';
+  setChkValues('periodo',d.periodo);document.getElementById('f-periodo-esp').value=d.periodoEsp||'';
   setRadioValue('recoleccion',d.recoleccion);
-  document.getElementById('f-largo').value=d.largo||'';
-  document.getElementById('f-ancho').value=d.ancho||'';
-  document.getElementById('f-area').value=d.area||'';
+  document.getElementById('f-largo').value=d.largo||'';document.getElementById('f-ancho').value=d.ancho||'';document.getElementById('f-area').value=d.area||'';
   MATS.forEach(function(m){var md=d.mats&&d.mats[m]?d.mats[m]:{qty:'',desc:''};var q=document.getElementById('mq-'+m),dd=document.getElementById('md-'+m);if(q)q.value=md.qty||'';if(dd)dd.value=md.desc||'';});
   document.getElementById('f-diagnosticos').value=d.diagnosticos||'';
-  setChkValues('emplazamiento',d.emplazamiento);
-  document.getElementById('f-empl-otro').value=d.emplOtro||'';
-  document.getElementById('f-empl-desc').value=d.emplDesc||'';
-  setRadioValue('conservacion',d.conservacion);
-  document.getElementById('f-cons-desc').value=d.consDesc||'';
-  document.getElementById('f-responsable').value=d.responsable||'';
-  document.getElementById('f-ayudantes').value=d.ayudantes||'';
-  document.getElementById('f-fecha').value=d.fecha||'';
-  document.getElementById('f-campana').value=d.campana||'';
+  estructuras=d.estructuras||[];renderEstructuras();
+  setChkValues('emplazamiento',d.emplazamiento);document.getElementById('f-empl-otro').value=d.emplOtro||'';document.getElementById('f-empl-desc').value=d.emplDesc||'';
+  setRadioValue('conservacion',d.conservacion);document.getElementById('f-cons-desc').value=d.consDesc||'';
+  document.getElementById('f-responsable').value=d.responsable||'';document.getElementById('f-ayudantes').value=d.ayudantes||'';
+  document.getElementById('f-fecha').value=d.fecha||'';document.getElementById('f-campana').value=d.campana||'';
   document.getElementById('f-obs').value=d.obs||'';
   photos=d.photos||[];renderPhotos();
   clearCanvas();if(d.croquis)setTimeout(function(){loadCanvasData(d.croquis);},100);
   if(d.lat&&d.lon)document.getElementById('gps-coords').textContent='UTM N: '+d.utmN+'  E: '+d.utmE+'  Huso: '+d.huso;
 }
 
-function saveFicha(){
+async function saveFicha(){
   var data=getForm();
   if(!data.sitio){showToast('⚠️ Ingresa el nombre del sitio');return;}
   if(!data.codigo)data.codigo=nextId();
+  // Guardar local primero
   var idx=-1;fichas.forEach(function(f,i){if(f.id===data.id)idx=i;});
   if(idx>=0)fichas[idx]=data;else fichas.unshift(data);
-  currentId=data.id;
   localStorage.setItem('fichas_ays',JSON.stringify(fichas));
+  // Guardar en Firebase
+  if(window._fbSave){
+    var ok=await window._fbSave(data);
+    if(ok){showToast('✅ '+data.codigo+' guardada y sincronizada ☁️');}
+    else{showToast('💾 '+data.codigo+' guardada localmente (sin conexión)');}
+  } else {
+    showToast('💾 '+data.codigo+' guardada localmente');
+  }
+  currentId=data.id;
   document.getElementById('btn-pdf').style.display='inline-flex';
   document.getElementById('btn-del').style.display='inline-flex';
   document.getElementById('form-title').textContent='Editando: '+data.sitio;
   document.getElementById('ficha-id-badge').textContent=data.codigo;
-  showToast('✅ Ficha '+data.codigo+' guardada');
 }
 
 function loadFicha(id){
@@ -688,7 +661,8 @@ function loadFicha(id){
 
 function askDelete(){document.getElementById('modal-del').classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-function confirmDelete(){
+async function confirmDelete(){
+  if(window._fbDelete) await window._fbDelete(currentId);
   fichas=fichas.filter(function(f){return f.id!==currentId;});
   localStorage.setItem('fichas_ays',JSON.stringify(fichas));
   closeModal('modal-del');nuevaFicha();showScreen('home');showToast('🗑 Ficha eliminada');
@@ -710,7 +684,7 @@ function renderFichas(){
     var b='';
     if(f.codigo)b+='<span class="badge">'+f.codigo+'</span>';
     if(f.fecha)b+='<span class="badge">📅 '+f.fecha+'</span>';
-    if(f.unidad)b+='<span class="badge">'+f.unidad+'</span>';
+    if(f.estructuras&&f.estructuras.length)b+='<span class="badge">🧱 '+f.estructuras.length+' estr.</span>';
     if(f.lat)b+='<span class="badge">🌐 GPS</span>';
     if(f.photos&&f.photos.length)b+='<span class="badge">📷 '+f.photos.length+'</span>';
     html+='<div class="ficha-card" onclick="loadFicha(\''+f.id+'\')"><h3>📍 '+(f.sitio||'Sin nombre')+'</h3><p>'+(f.proyecto||'')+(f.region?' — '+f.region:'')+'</p><div class="badges">'+b+'</div></div>';
@@ -718,56 +692,9 @@ function renderFichas(){
   list.innerHTML=html;
 }
 
-// ─── ZIP ──────────────────────────────────────────────────────────────
-function exportZIP(){
-  if(!fichas.length){showToast('No hay fichas para exportar');return;}
-  showToast('⏳ Generando ZIP...');
-  var zip=new JSZip();
-  zip.file('_backup_completo.json',JSON.stringify(fichas));
-  fichas.forEach(function(f){
-    var safe=(f.codigo||f.id)+'_'+(f.sitio||'ficha').replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_-]/g,'');
-    var copy=JSON.parse(JSON.stringify(f));
-    var refs=[];
-    (copy.photos||[]).forEach(function(p,i){var b=p.replace(/^data:image\/\w+;base64,/,'');var fn=safe+'_foto'+i+'.jpg';zip.file('fotos/'+fn,b,{base64:true});refs.push(fn);});
-    if(copy.croquis){var cb=copy.croquis.replace(/^data:image\/\w+;base64,/,'');zip.file('croquis/'+safe+'_croquis.png',cb,{base64:true});copy.croquis='croquis/'+safe+'_croquis.png';}
-    copy.photos=refs;
-    zip.file('fichas/'+safe+'.json',JSON.stringify(copy,null,2));
-  });
-  zip.generateAsync({type:'blob'}).then(function(blob){
-    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-    var d=new Date();a.download='fichas_ays_'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'.zip';
-    a.click();showToast('✅ ZIP exportado con '+fichas.length+' fichas');
-  });
-}
-
-function importZIP(e){
-  var file=e.target.files[0];if(!file)return;
-  new JSZip().loadAsync(file).then(function(z){
-    var bf=z.file('_backup_completo.json');
-    if(!bf){showToast('❌ ZIP no válido');return;}
-    bf.async('string').then(function(str){
-      var imported=JSON.parse(str);pendingImport=imported;
-      var nuevas=0;imported.forEach(function(f){if(!fichas.find(function(x){return x.id===f.id;}))nuevas++;});
-      document.getElementById('modal-import-msg').textContent='Se encontraron '+imported.length+' fichas ('+nuevas+' nuevas). ¿Importar y combinar?';
-      document.getElementById('modal-import').classList.add('open');
-    });
-  }).catch(function(){showToast('❌ Error al leer el ZIP');});
-  e.target.value='';
-}
-
-function confirmImport(){
-  if(!pendingImport)return;
-  var added=0;
-  pendingImport.forEach(function(f){var idx=fichas.findIndex(function(x){return x.id===f.id;});if(idx>=0)fichas[idx]=f;else{fichas.push(f);added++;}});
-  fichas.sort(function(a,b){return (b.ts||'').localeCompare(a.ts||'');});
-  localStorage.setItem('fichas_ays',JSON.stringify(fichas));
-  closeModal('modal-import');showToast('✅ '+added+' fichas nuevas importadas');renderFichas();pendingImport=null;
-}
-
-// ─── TOAST ────────────────────────────────────────────────────────────
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
 
-// ─── PDF ──────────────────────────────────────────────────────────────
+// PDF
 function exportPDF(){
   var data=getForm();
   var doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
@@ -791,41 +718,29 @@ function exportPDF(){
   if(data.codigo){doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(58,125,44);doc.text(data.codigo,pw-28,y+7);}
   y+=28;
 
-  // Identificación
   y=sec('IDENTIFICACIÓN GENERAL',y)+2;
-  bx(ml,y,cw/2,8);bx(ml+cw/2,y,cw/2,8);
-  lbl('NOMBRE SITIO/HALLAZGO',ml+1,y+3);lbl('NOMBRE UNIDAD',ml+cw/2+1,y+3);
-  val(data.sitio,ml+1,y+7,cw/2-3);val(data.unidad,ml+cw/2+1,y+7,cw/2-3);y+=8;
+  bx(ml,y,cw,8);lbl('NOMBRE SITIO/HALLAZGO',ml+1,y+3);val(data.sitio,ml+1,y+7,cw-3);y+=8;
   var w3=cw/3;bx(ml,y,w3,7);bx(ml+w3,y,w3,7);bx(ml+w3*2,y,w3,7);
   lbl('REGIÓN',ml+1,y+3);lbl('PROVINCIA',ml+w3+1,y+3);lbl('COMUNA',ml+w3*2+1,y+3);
   val(data.region,ml+1,y+6.5);val(data.provincia,ml+w3+1,y+6.5);val(data.comuna,ml+w3*2+1,y+6.5);y+=10;
 
-  // GPS
   np(30);y=sec('COORDENADAS WGS84',y)+2;
   var gw=cw/4;
   [['UTM NORTE',data.utmN],['UTM ESTE',data.utmE],['HUSO',data.huso],['ALTITUD (msnm)',data.altitud]].forEach(function(p,i){bx(ml+gw*i,y,gw,7);lbl(p[0],ml+gw*i+1,y+3);val(p[1]||'',ml+gw*i+1,y+6.5);});y+=7;
   [['LAT (°)',data.lat],['LON (°)',data.lon],['ERROR GPS (±m)',data.error],['','']].forEach(function(p,i){bx(ml+gw*i,y,gw,7);if(p[0])lbl(p[0],ml+gw*i+1,y+3);val(p[1]||'',ml+gw*i+1,y+6.5);});y+=10;
 
-  // Vértices
   if(data.vertices&&data.vertices.length){
     np(20);y=sec('VÉRTICES DEL POLÍGONO',y)+2;
     var vc=[15,45,cw/2-10,cw-60-cw/2+10];
     doc.setFillColor(58,125,44);doc.rect(ml,y,vc[0],6,'F');doc.rect(ml+vc[0],y,vc[1],6,'F');doc.rect(ml+vc[0]+vc[1],y,vc[2],6,'F');doc.rect(ml+vc[0]+vc[1]+vc[2],y,vc[3],6,'F');
     doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(7);
     doc.text('#',ml+5,y+4.2);doc.text('UBICACIÓN',ml+vc[0]+1,y+4.2);doc.text('UTM NORTE',ml+vc[0]+vc[1]+1,y+4.2);doc.text('UTM ESTE',ml+vc[0]+vc[1]+vc[2]+1,y+4.2);y+=6;
-    data.vertices.forEach(function(v,i){
-      np(6);var fl=i%2===0?[255,255,255]:[245,250,243];
-      bx(ml,y,vc[0],6,fl);bx(ml+vc[0],y,vc[1],6,fl);bx(ml+vc[0]+vc[1],y,vc[2],6,fl);bx(ml+vc[0]+vc[1]+vc[2],y,vc[3],6,fl);
-      doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.setFontSize(7.5);
-      doc.text(String(i+1),ml+5,y+4.2);doc.text(v.ubicacion||'',ml+vc[0]+1,y+4.2);doc.text(v.n||'',ml+vc[0]+vc[1]+1,y+4.2);doc.text(v.e||'',ml+vc[0]+vc[1]+vc[2]+1,y+4.2);y+=6;
-    });y+=4;
+    data.vertices.forEach(function(v,i){np(6);var fl=i%2===0?[255,255,255]:[245,250,243];bx(ml,y,vc[0],6,fl);bx(ml+vc[0],y,vc[1],6,fl);bx(ml+vc[0]+vc[1],y,vc[2],6,fl);bx(ml+vc[0]+vc[1]+vc[2],y,vc[3],6,fl);doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text(String(i+1),ml+5,y+4.2);doc.text(v.ubicacion||'',ml+vc[0]+1,y+4.2);doc.text(v.n||'',ml+vc[0]+vc[1]+1,y+4.2);doc.text(v.e||'',ml+vc[0]+vc[1]+vc[2]+1,y+4.2);y+=6;});y+=4;
   }
 
-  // Características
   np(35);y=sec('CARACTERÍSTICAS GENERALES DEL SITIO/HALLAZGO',y)+2;
   bx(ml,y,cw,7);lbl('TIPO',ml+1,y+3);val(data.tipo,ml+20,y+6.5,cw-22);y+=9;
-  lbl('Tipología funcional:',ml,y+3);
-  var tx=ml+35;
+  lbl('Tipología funcional:',ml,y+3);var tx=ml+35;
   ['Doméstico/habitacional','Productivo','Tránsito','Ritual','Entierro','Indeterminado'].forEach(function(t){chk(t,data.tipologia&&data.tipologia.indexOf(t)>=0,tx,y+3);tx+=30;if(tx>195){tx=ml+35;y+=6;}});
   if(data.tipologiaOtro){y+=6;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(30,30,30);doc.text('Otro: '+data.tipologiaOtro,ml,y+3);}
   y+=8;lbl('Período:',ml,y+3);tx=ml+20;
@@ -833,78 +748,75 @@ function exportPDF(){
   if(data.periodoEsp){doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(30,30,30);doc.text('Período específico: '+data.periodoEsp,ml+100,y+3);}
   y+=10;
 
-  // Recolección
   np(25);y=sec('RECOLECCIÓN SUPERFICIAL ARQUEOLÓGICA',y)+3;
-  lbl('Tipo de recolección:',ml,y+3);
-  chk('Decapado (5 cm)',data.recoleccion==='Decapado (5 cm)',ml+36,y+3);
-  chk('Barrido',data.recoleccion==='Barrido',ml+72,y+3);y+=8;
+  lbl('Tipo de recolección:',ml,y+3);chk('Decapado (5 cm)',data.recoleccion==='Decapado (5 cm)',ml+36,y+3);chk('Barrido',data.recoleccion==='Barrido',ml+72,y+3);y+=8;
   var dw=cw/3;bx(ml,y,dw,7);bx(ml+dw,y,dw,7);bx(ml+dw*2,y,dw,7);
   lbl('LARGO (m)',ml+1,y+3);lbl('ANCHO (m)',ml+dw+1,y+3);lbl('ÁREA (m²)',ml+dw*2+1,y+3);
   val(data.largo,ml+1,y+6.5);val(data.ancho,ml+dw+1,y+6.5);val(data.area,ml+dw*2+1,y+6.5);y+=10;
 
-  // Materiales
   np(20);y=sec('MATERIAL ARQUEOLÓGICO RECOLECTADO',y)+1;
   var c1=40,c2=20,c3=cw-60;
   doc.setFillColor(58,125,44);doc.rect(ml,y,c1,6,'F');doc.rect(ml+c1,y,c2,6,'F');doc.rect(ml+c1+c2,y,c3,6,'F');
   doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(7);
   doc.text('TIPOLOGÍA',ml+1,y+4.2);doc.text('CANT.',ml+c1+1,y+4.2);doc.text('DESCRIPCIÓN GENERAL',ml+c1+c2+1,y+4.2);y+=6;
-  MATS.forEach(function(m,idx){
-    np(7);var fl=idx%2===0?[255,255,255]:[245,250,243];
-    bx(ml,y,c1,6,fl);bx(ml+c1,y,c2,6,fl);bx(ml+c1+c2,y,c3,6,fl);
-    var md=data.mats&&data.mats[m]?data.mats[m]:{qty:'',desc:''};
-    doc.setTextColor(30,30,30);doc.setFont('helvetica',md.qty||md.desc?'bold':'normal');doc.setFontSize(7.5);doc.text(m,ml+1,y+4.2);
-    doc.setFont('helvetica','normal');doc.text(md.qty||'',ml+c1+2,y+4.2);
-    doc.text((doc.splitTextToSize(md.desc||'',c3-2))[0]||'',ml+c1+c2+1,y+4.2);y+=6;
-  });y+=4;
+  MATS.forEach(function(m,idx){np(7);var fl=idx%2===0?[255,255,255]:[245,250,243];bx(ml,y,c1,6,fl);bx(ml+c1,y,c2,6,fl);bx(ml+c1+c2,y,c3,6,fl);var md=data.mats&&data.mats[m]?data.mats[m]:{qty:'',desc:''};doc.setTextColor(30,30,30);doc.setFont('helvetica',md.qty||md.desc?'bold':'normal');doc.setFontSize(7.5);doc.text(m,ml+1,y+4.2);doc.setFont('helvetica','normal');doc.text(md.qty||'',ml+c1+2,y+4.2);doc.text((doc.splitTextToSize(md.desc||'',c3-2))[0]||'',ml+c1+c2+1,y+4.2);y+=6;});y+=4;
 
-  // Diagnósticos
   np(30);y=sec('DESCRIPCIÓN EN DETALLE DE MATERIALES DIAGNÓSTICOS',y)+2;
-  bx(ml,y,cw,25);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);
-  doc.text(doc.splitTextToSize(data.diagnosticos||'',cw-4),ml+2,y+5);y+=29;
+  bx(ml,y,cw,25);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.diagnosticos||'',cw-4),ml+2,y+5);y+=29;
 
-  // Emplazamiento
+  // Estructuras en PDF
+  if(data.estructuras&&data.estructuras.length){
+    np(20);y=sec('REGISTRO DE ESTRUCTURAS',y)+2;
+    data.estructuras.forEach(function(e,i){
+      np(40);
+      doc.setFillColor(232,245,226);doc.rect(ml,y,cw,6,'F');
+      doc.setTextColor(45,106,31);doc.setFont('helvetica','bold');doc.setFontSize(8);
+      doc.text('Estructura '+(i+1)+(e.nombre?' — '+e.nombre:''),ml+2,y+4.2);y+=8;
+      var ew=cw/3;
+      bx(ml,y,ew,7);bx(ml+ew,y,ew,7);bx(ml+ew*2,y,ew,7);
+      lbl('LARGO (m)',ml+1,y+3);lbl('ANCHO (m)',ml+ew+1,y+3);lbl('ALTO (m)',ml+ew*2+1,y+3);
+      val(e.largo||'',ml+1,y+6.5);val(e.ancho||'',ml+ew+1,y+6.5);val(e.alto||'',ml+ew*2+1,y+6.5);y+=7;
+      bx(ml,y,ew,7);bx(ml+ew,y,ew,7);bx(ml+ew*2,y,ew,7);
+      lbl('FORMA',ml+1,y+3);lbl('MATERIALIDAD',ml+ew+1,y+3);lbl('VANOS',ml+ew*2+1,y+3);
+      val(e.forma||'',ml+1,y+6.5);val(e.materialidad||'',ml+ew+1,y+6.5);val(e.vanos||'',ml+ew*2+1,y+6.5);y+=7;
+      bx(ml,y,ew,7);bx(ml+ew,y,ew,7);
+      lbl('N° HILERAS',ml+1,y+3);lbl('N° HILADAS',ml+ew+1,y+3);
+      val(e.hileras||'',ml+1,y+6.5);val(e.hiladas||'',ml+ew+1,y+6.5);y+=7;
+      if(e.obs){bx(ml,y,cw,12);lbl('Observaciones:',ml+1,y+3);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(e.obs,cw-4),ml+2,y+7);y+=14;}
+      y+=4;
+    });
+  }
+
   np(30);y=sec('EMPLAZAMIENTO DE LA UNIDAD DE RECOLECCIÓN',y)+3;
   lbl('Emplazamiento:',ml,y+3);tx=ml+30;
   ['Llanura','Lomaje','Ladera','Quebrada','Cerro','Terraza fluvial'].forEach(function(e){chk(e,data.emplazamiento&&data.emplazamiento.indexOf(e)>=0,tx,y+3);tx+=28;});
   if(data.emplOtro){y+=6;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(30,30,30);doc.text('Otro: '+data.emplOtro,ml,y+3);}
-  y+=9;bx(ml,y,cw,18);lbl('Descripción:',ml+1,y+3);
-  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.emplDesc||'',cw-4),ml+2,y+8);y+=22;
+  y+=9;bx(ml,y,cw,18);lbl('Descripción:',ml+1,y+3);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.emplDesc||'',cw-4),ml+2,y+8);y+=22;
 
-  // Conservación
   np(30);y=sec('ESTADO GENERAL DE CONSERVACIÓN',y)+3;
   lbl('Estado:',ml,y+3);chk('Bueno',data.conservacion==='Bueno',ml+18,y+3);chk('Regular',data.conservacion==='Regular',ml+45,y+3);chk('Malo',data.conservacion==='Malo',ml+72,y+3);y+=9;
   bx(ml,y,cw,18);lbl('Descripción:',ml+1,y+3);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.consDesc||'',cw-4),ml+2,y+8);y+=22;
 
-  // Responsables
   np(20);y=sec('RESPONSABLES',y)+2;
   bx(ml,y,cw/2,7);bx(ml+cw/2,y,cw/4,7);bx(ml+cw*3/4,y,cw/4,7);
   lbl('RESPONSABLE DE UNIDAD',ml+1,y+3);lbl('FECHA',ml+cw/2+1,y+3);lbl('CAMPAÑA',ml+cw*3/4+1,y+3);
   val(data.responsable,ml+1,y+6.5,cw/2-3);val(data.fecha,ml+cw/2+1,y+6.5);val(data.campana,ml+cw*3/4+1,y+6.5);y+=7;
   bx(ml,y,cw,7);lbl('AYUDANTE/ES DE UNIDAD',ml+1,y+3);val(data.ayudantes,ml+1,y+6.5,cw-3);y+=10;
 
-  // Observaciones
   if(data.obs){np(22);y=sec('OBSERVACIONES',y)+2;bx(ml,y,cw,18);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.obs,cw-4),ml+2,y+5);y+=22;}
 
-  // Croquis
   np(15);y=sec('CROQUIS DE DISPERSIÓN DE MATERIAL ARQUEOLÓGICO SUPERFICIAL',y)+4;
   try{doc.addImage(getCanvasData(),'PNG',ml,y,cw,60,'','MEDIUM');y+=64;}catch(e){y+=4;}
 
-  // Fotos
   if(data.photos&&data.photos.length){
     np(15);y=sec('REGISTRO FOTOGRÁFICO',y)+4;
     var iw=(cw-4)/2,ih=60;
-    data.photos.forEach(function(p,i){if(i%2===0&&i>0){y+=ih+5;}np(ih+10);var x=ml+(i%2)*(iw+4);try{doc.addImage(p,'JPEG',x,y,iw,ih,'','MEDIUM');}catch(e){bx(x,y,iw,ih,[240,240,240]);}});
+    data.photos.forEach(function(p,i){if(i%2===0&&i>0){y+=ih+5;}np(ih+10);var x=ml+(i%2)*(iw+4);try{doc.addImage(p,'JPEG',x,y,iw,ih,'','MEDIUM');}catch(e){}});
     y+=ih+8;
   }
 
-  // Footer
   var total=doc.internal.getNumberOfPages();
-  for(var pg=1;pg<=total;pg++){
-    doc.setPage(pg);doc.setDrawColor(58,125,44);doc.setLineWidth(0.5);doc.line(ml,ph-12,pw-14,ph-12);
-    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100,100,100);
-    doc.text('Ambiental y Sectorial  |  Ficha de Recolección Superficial  |  '+(data.proyecto||''),ml,ph-8);
-    doc.text('Página '+pg+' de '+total,pw-36,ph-8);
-  }
+  for(var pg=1;pg<=total;pg++){doc.setPage(pg);doc.setDrawColor(58,125,44);doc.setLineWidth(0.5);doc.line(ml,ph-12,pw-14,ph-12);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100,100,100);doc.text('Ambiental y Sectorial  |  Ficha de Recolección Superficial  |  '+(data.proyecto||''),ml,ph-8);doc.text('Página '+pg+' de '+total,pw-36,ph-8);}
   doc.save('Ficha_'+(data.codigo||'RS')+'_'+(data.sitio||'sin_nombre').replace(/\s+/g,'_')+'_'+data.fecha+'.pdf');
   showToast('📄 PDF exportado correctamente');
 }

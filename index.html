@@ -44,6 +44,11 @@ onSnapshot(fichasRef, function(snapshot){
   updateSyncStatus(false);
 });
 
+// Detectar conexión
+window.addEventListener('online', function(){ updateSyncStatus(true); });
+window.addEventListener('offline', function(){ updateSyncStatus(false); });
+if(!navigator.onLine) updateSyncStatus(false);
+
 // Exponer funciones Firebase al scope global
 window._fbSave = async function(data){
   try {

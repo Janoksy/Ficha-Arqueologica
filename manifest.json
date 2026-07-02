@@ -1,0 +1,22 @@
+{
+  "name": "Fichas Arqueológicas AyS",
+  "short_name": "FichasAyS",
+  "description": "App de registro arqueológico — Ambiental y Sectorial",
+  "start_url": "/Ficha-Arqueologica/",
+  "display": "standalone",
+  "background_color": "#f0f4ee",
+  "theme_color": "#2d6a1f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/3a7d2c/ffffff?text=AyS",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/3a7d2c/ffffff?text=AyS",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

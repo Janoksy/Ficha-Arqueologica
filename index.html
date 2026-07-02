@@ -9,6 +9,7 @@
 <title>Fichas Arqueológicas — AyS</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -340,6 +341,12 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 
 <!-- CONFIG -->
 <div id="screen-config" class="screen">
+  <div class="sec">📊 Exportar Base de Datos</div>
+  <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.08)">
+    <h3 style="font-size:14px;color:var(--gd);margin-bottom:8px">📥 Exportar todas las fichas a Excel</h3>
+    <p style="font-size:13px;color:#666;margin-bottom:12px">Descarga todas las fichas en formato Excel compatible con tu base de datos Access. Las columnas coinciden exactamente con tu planilla.</p>
+    <button class="btn btn-primary" onclick="exportExcel()">📊 Descargar Excel</button>
+  </div>
   <div class="sec">⚙️ Configuración</div>
   <div class="field"><label>Proyecto predeterminado</label><input type="text" id="cfg-proyecto" onchange="saveConfig()"></div>
   <div class="field"><label>Arqueólogo responsable (predeterminado)</label><input type="text" id="cfg-resp" onchange="saveConfig()"></div>
@@ -696,6 +703,147 @@ function renderFichas(){
     html+='<div class="ficha-card" onclick="loadFicha(\''+f.id+'\')"><h3>📍 '+(f.sitio||'Sin nombre')+'</h3><p>'+(f.proyecto||'')+(f.region?' — '+f.region:'')+'</p><div class="badges">'+b+'</div></div>';
   });
   list.innerHTML=html;
+}
+
+function exportExcel(){
+  if(!fichas.length){showToast('No hay fichas para exportar');return;}
+  var headers = [
+    'ID Proyecto','Proyecto','ID','WGS84 UTM N','UTM E','HUSO','Error GPS +-','ALTITUD',
+    'REGIÓN','PROVINCIA','COMUNA','Categoria Patrimonial','Tipo','N° objetos hallazgo aislado',
+    'Tipología funcional','Otro','Cronología','Cronología específica',
+    'Cerámica','Lítico','Malacológico','Osteofauna','Metal','Vidrio','Porcelana','Loza','Otros','Descripción Otros',
+    'Descripción de evidencias muebles en el sitio o hallazgo aislado',
+    'Estructura demarcatoria','Estructura habitacional','Estructura productiva','Estructura indeterminada',
+    'Conchal','Arte rupestre','Rasgo lineal','Rasgo estructural','Otro','Descripción Otros',
+    'Descripción de evidencias inmuebles en el sitio o hallazgo aislado',
+    'Potencial estratigráfico','Descripción del potencial estratigráfico',
+    'm largo','m ancho','Área m2','Poligono Irregular',
+    'Punto 1 Ubicación','Punto 1 Coordenada N','Punto 1 Coordenada E',
+    'Punto 2 Ubicación','Punto 2 Coordenada N','Punto 2 Coordenada E',
+    'Punto 3 Ubicación','Punto 3 Coordenada N','Punto 3 Coordenada E',
+    'Punto 4 Ubicación','Punto 4 Coordenada N','Punto 4 Coordenada E',
+    'Punto 5 Ubicación','Punto 5 Coordenada N','Punto 5 Coordenada E',
+    'Punto 6 Ubicación','Punto 6 Coordenada N','Punto 6 Coordenada E',
+    'Punto 7 Ubicación','Punto 7 Coordenada N','Punto 7 Coordenada E',
+    'Asociación con otros hallazgos arqueológicos',
+    'Emplazamiento','Descripción general del emplazamiento',
+    'Estado de conservación','Descripción estado de conservación',
+    'Afectación antrópica','Afectación natural',
+    'Registrado por','Fecha','Hora','Registro previo','Observaciones','Status'
+  ];
+
+  var rows = fichas.map(function(f){
+    var mats = f.mats || {};
+    var vtx = f.vertices || [];
+    function vp(i, field){ return vtx[i] ? vtx[i][field]||'' : ''; }
+
+    // Tipología funcional como texto
+    var tipologia = (f.tipologia||[]).join(', ');
+    if(f.tipologiaOtro) tipologia += (tipologia?', ':'')+f.tipologiaOtro;
+
+    // Período
+    var periodo = (f.periodo||[]).join(', ');
+
+    // Emplazamiento
+    var empl = (f.emplazamiento||[]).join(', ');
+    if(f.emplOtro) empl += (empl?', ':'')+f.emplOtro;
+
+    return [
+      '',                          // ID Proyecto
+      f.proyecto||'',              // Proyecto
+      f.codigo||'',                // ID
+      f.utmN||'',                  // WGS84 UTM N
+      f.utmE||'',                  // UTM E
+      f.huso||'',                  // HUSO
+      f.error||'',                 // Error GPS +-
+      f.altitud||'',               // ALTITUD
+      f.region||'',                // REGIÓN
+      f.provincia||'',             // PROVINCIA
+      f.comuna||'',                // COMUNA
+      '',                          // Categoria Patrimonial
+      f.tipo||'',                  // Tipo
+      '',                          // N° objetos hallazgo aislado
+      tipologia,                   // Tipología funcional
+      f.tipologiaOtro||'',         // Otro
+      periodo,                     // Cronología
+      f.periodoEsp||'',            // Cronología específica
+      mats['Cerámica']&&mats['Cerámica'].qty||'',
+      mats['Lítico']&&mats['Lítico'].qty||'',
+      mats['Malacológico']&&mats['Malacológico'].qty||'',
+      mats['Osteofauna']&&mats['Osteofauna'].qty||'',
+      mats['Metal']&&mats['Metal'].qty||'',
+      mats['Vidrio']&&mats['Vidrio'].qty||'',
+      mats['Porcelana']&&mats['Porcelana'].qty||'',
+      mats['Loza']&&mats['Loza'].qty||'',
+      '',                          // Otros
+      '',                          // Descripción Otros
+      f.diagnosticos||'',          // Descripción evidencias muebles
+      '',                          // Estructura demarcatoria
+      '',                          // Estructura habitacional
+      '',                          // Estructura productiva
+      '',                          // Estructura indeterminada
+      '',                          // Conchal
+      '',                          // Arte rupestre
+      '',                          // Rasgo lineal
+      '',                          // Rasgo estructural
+      '',                          // Otro
+      '',                          // Descripción Otros
+      '',                          // Descripción evidencias inmuebles
+      '',                          // Potencial estratigráfico
+      '',                          // Descripción potencial estratigráfico
+      f.largo||'',                 // m largo
+      f.ancho||'',                 // m ancho
+      f.area||'',                  // Área m2
+      '',                          // Polígono irregular
+      vp(0,'ubicacion'),vp(0,'n'),vp(0,'e'),
+      vp(1,'ubicacion'),vp(1,'n'),vp(1,'e'),
+      vp(2,'ubicacion'),vp(2,'n'),vp(2,'e'),
+      vp(3,'ubicacion'),vp(3,'n'),vp(3,'e'),
+      vp(4,'ubicacion'),vp(4,'n'),vp(4,'e'),
+      vp(5,'ubicacion'),vp(5,'n'),vp(5,'e'),
+      vp(6,'ubicacion'),vp(6,'n'),vp(6,'e'),
+      '',                          // Asociación con otros hallazgos
+      empl,                        // Emplazamiento
+      f.emplDesc||'',              // Descripción general emplazamiento
+      f.conservacion||'',          // Estado de conservación
+      f.consDesc||'',              // Descripción estado conservación
+      '',                          // Afectación antrópica
+      '',                          // Afectación natural
+      f.responsable||'',           // Registrado por
+      f.fecha||'',                 // Fecha
+      '',                          // Hora
+      '',                          // Registro previo
+      f.obs||'',                   // Observaciones
+      ''                           // Status
+    ];
+  });
+
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet([headers].concat(rows));
+
+  // Ancho de columnas
+  ws['!cols'] = headers.map(function(h){
+    return {wch: Math.max(h.length, 15)};
+  });
+
+  // Estilo encabezado (color verde)
+  var range = XLSX.utils.decode_range(ws['!ref']);
+  for(var c = range.s.c; c <= range.e.c; c++){
+    var cell = ws[XLSX.utils.encode_cell({r:0, c:c})];
+    if(cell){
+      cell.s = {
+        fill:{fgColor:{rgb:'2d6a1f'}},
+        font:{color:{rgb:'ffffff'},bold:true},
+        alignment:{horizontal:'center'}
+      };
+    }
+  }
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Fichas');
+  var d = new Date();
+  var fname = 'FichasAyS_'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'.xlsx';
+  XLSX.writeFile(wb, fname);
+  showToast('📊 Excel exportado: '+fichas.length+' fichas');
 }
 
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}

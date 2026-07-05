@@ -8,12 +8,9 @@
 <link rel="manifest" href="manifest.json">
 <title>Fichas Arqueológicas — AyS</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
 const firebaseConfig = {
   apiKey: "AIzaSyCmhzKOwDpUBUqGl8bble0TSCMZ9K40V7E",
   authDomain: "fichas-ays.firebaseapp.com",
@@ -22,51 +19,26 @@ const firebaseConfig = {
   messagingSenderId: "631349335008",
   appId: "1:631349335008:web:711dcc9aec45391d615185"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
-enableIndexedDbPersistence(db).catch(function(err){
-  console.log('Offline persistence:', err.code);
-});
-
+enableIndexedDbPersistence(db).catch(function(err){ console.log('Offline persistence:', err.code); });
 const fichasRef = collection(db, 'fichas');
 onSnapshot(fichasRef, function(snapshot){
   fichas = [];
   snapshot.forEach(function(d){ fichas.push(d.data()); });
   fichas.sort(function(a,b){ return (b.ts||'').localeCompare(a.ts||''); });
   localStorage.setItem('fichas_ays', JSON.stringify(fichas));
-  renderFichas();
-  updateSyncStatus(true);
-}, function(err){
-  console.log('Firebase offline, usando cache local');
-  updateSyncStatus(false);
-});
-
+  renderFichas(); updateSyncStatus(true);
+}, function(err){ console.log('Firebase offline'); updateSyncStatus(false); });
 window.addEventListener('online', function(){ updateSyncStatus(true); });
 window.addEventListener('offline', function(){ updateSyncStatus(false); });
 if(!navigator.onLine) updateSyncStatus(false);
-
 window._fbSave = async function(data){
-  try {
-    await setDoc(doc(db, 'fichas', data.id), data);
-    return true;
-  } catch(e){
-    console.log('Save error:', e);
-    return false;
-  }
+  try{ await setDoc(doc(db,'fichas',data.id),data); return true; }catch(e){ return false; }
 };
-
 window._fbDelete = async function(id){
-  try {
-    await deleteDoc(doc(db, 'fichas', id));
-    return true;
-  } catch(e){
-    return false;
-  }
+  try{ await deleteDoc(doc(db,'fichas',id)); return true; }catch(e){ return false; }
 };
-
-window._firebaseReady = true;
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -84,17 +56,43 @@ nav button{flex:1;min-width:60px;padding:11px 6px;border:none;background:none;co
 nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 .screen{display:none;padding:16px;max-width:600px;margin:0 auto;padding-bottom:40px}
 .screen.active{display:block}
-.ficha-card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.1);cursor:pointer;border-left:4px solid var(--gl)}
-.ficha-card h3{font-size:14px;color:var(--gd);margin-bottom:4px}
-.ficha-card p{font-size:12px;color:#666}
-.badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-.badge{background:var(--gp);color:var(--gd);padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.sync-banner{padding:8px 16px;font-size:12px;text-align:center;font-weight:600}
+.sync-banner.online{background:#e8f5e2;color:#2d6a1f}
+.sync-banner.offline{background:#fff3cd;color:#856404}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.stat-num{font-size:26px;font-weight:800;color:var(--gd)}
+.stat-label{font-size:11px;color:#888;margin-top:2px;font-weight:500}
+
+/* FICHA CARDS */
+.ficha-card{background:#fff;border-radius:12px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.08);cursor:pointer;overflow:hidden;transition:transform .1s}
+.ficha-card:active{transform:scale(0.98)}
+.ficha-card-cover{width:100%;height:120px;object-fit:cover;display:block;background:var(--gp)}
+.ficha-card-cover-placeholder{height:6px;background:linear-gradient(90deg,var(--gm),var(--gl))}
+.ficha-card-body{padding:12px 14px}
+.ficha-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.ficha-card-sitio{font-size:15px;font-weight:700;color:var(--gd)}
+.ficha-card-tiempo{font-size:11px;color:#aaa;white-space:nowrap;margin-left:8px}
+.ficha-card-proyecto{font-size:12px;color:#888;margin-bottom:8px}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge{background:var(--gp);color:var(--gd);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+
+/* BOTONES */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;touch-action:manipulation}
 .btn-primary{background:var(--gm);color:#fff}
 .btn-danger{background:#c0392b;color:#fff}
 .btn-outline{background:#fff;color:var(--gd);border:2px solid var(--gm)}
+.btn-whatsapp{background:#25D366;color:#fff}
 .btn-sm{padding:7px 12px;font-size:12px}
 .btn:disabled{opacity:.5}
+.btn-save{background:var(--gm);color:#fff;transition:all .2s}
+.btn-save:disabled{opacity:.6;cursor:not-allowed}
+.btn-save.saving{background:#1a5c14}
+.btn-save.saved{background:#1a5c14}
+
+/* FORM */
 .sec{background:var(--gm);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;margin:16px 0 10px;text-transform:uppercase;letter-spacing:.5px}
 .field{margin-bottom:12px}
 .field label{display:block;font-size:12px;font-weight:600;color:var(--gd);margin-bottom:4px}
@@ -128,7 +126,6 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 .modal h3{margin-bottom:10px;color:var(--gd)}
 .modal p{font-size:13px;color:#666;margin-bottom:16px}
 .modal-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-/* TOAST MEJORADO */
 .toast{position:fixed;bottom:80px;left:16px;right:16px;transform:translateY(20px);background:rgba(28,28,30,0.95);color:#fff;padding:16px 20px;border-radius:16px;font-size:15px;font-weight:600;opacity:0;transition:all .3s;pointer-events:none;z-index:300;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3)}
 .toast.show{opacity:1;transform:translateY(0)}
 .toast.success{background:rgba(52,199,89,0.95)}
@@ -147,17 +144,30 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 .vtx-row input{padding:6px 8px;border:1.5px solid #ccc;border-radius:6px;font-size:12px;width:100%}
 .vtx-row button{padding:4px;border:none;background:#c0392b;color:#fff;border-radius:6px;cursor:pointer;font-size:12px}
 .vtx-header{display:grid;grid-template-columns:24px 1fr 1fr 1fr 32px;gap:6px;font-size:11px;font-weight:700;color:#888;margin-bottom:4px;padding:0 2px}
-.sync-banner{padding:8px 16px;font-size:12px;text-align:center;font-weight:600}
-.sync-banner.online{background:#e8f5e2;color:#2d6a1f}
-.sync-banner.offline{background:#fff3cd;color:#856404}
 .est-row{background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;border:1.5px solid #ddd}
 .est-row-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .est-row-header span{font-weight:700;color:var(--gd);font-size:13px}
-/* BOTÓN GUARDAR */
-.btn-save{background:var(--gm);color:#fff;transition:all .2s}
-.btn-save:disabled{opacity:.6;cursor:not-allowed}
-.btn-save.saving{background:#1a5c14}
-.btn-save.saved{background:#1a5c14}
+
+/* DETALLE */
+.detail-hero{position:relative;height:200px;background:linear-gradient(135deg,var(--gd),var(--gm));overflow:hidden}
+.detail-hero img{width:100%;height:100%;object-fit:cover}
+.detail-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7),transparent);display:flex;flex-direction:column;justify-content:flex-end;padding:16px}
+.detail-hero-id{font-size:12px;color:rgba(255,255,255,.7);font-weight:600;letter-spacing:1px;margin-bottom:4px}
+.detail-hero-title{font-size:20px;font-weight:800;color:#fff;line-height:1.2}
+.detail-hero-sub{font-size:13px;color:rgba(255,255,255,.75);margin-top:4px}
+.detail-section{background:#fff;border-radius:12px;margin:12px 16px 0;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden}
+.detail-sec-title{background:var(--gm);color:#fff;padding:8px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:11px 14px;border-bottom:.5px solid #f0f0f0;gap:12px}
+.detail-row:last-child{border-bottom:none}
+.detail-key{font-size:13px;color:#888;flex-shrink:0;max-width:45%}
+.detail-val{font-size:13px;color:var(--text);font-weight:600;text-align:right;word-break:break-word}
+.detail-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px}
+.detail-photo{aspect-ratio:1;overflow:hidden}
+.detail-photo img{width:100%;height:100%;object-fit:cover}
+.detail-actions{display:flex;gap:10px;padding:16px;flex-wrap:wrap}
+
+/* PROYECTO BADGE en lista */
+.proyecto-group-title{font-size:12px;font-weight:700;color:var(--gd);text-transform:uppercase;letter-spacing:.5px;padding:8px 4px 4px;margin-top:4px}
 </style>
 </head>
 <body>
@@ -165,9 +175,8 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 <div class="app-header">
   <div class="logo-box">as</div>
   <div><h1>Fichas Arqueológicas</h1><p>Ambiental y Sectorial</p></div>
-  <div class="sync-dot" id="sync-dot" title="Estado de sincronización"></div>
+  <div class="sync-dot" id="sync-dot"></div>
 </div>
-
 <div class="sync-banner offline" id="sync-banner">⏳ Conectando con servidor...</div>
 
 <nav>
@@ -178,17 +187,27 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 
 <!-- HOME -->
 <div id="screen-home" class="screen active">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;margin-top:4px">
-    <h2 style="font-size:16px;color:var(--gd)">Fichas guardadas</h2>
-    <span id="ficha-count" style="font-size:12px;color:#888"></span>
-  </div>
-  <div class="search-bar">
-    <input type="text" id="search-input" placeholder="🔍 Buscar por nombre, proyecto, fecha..." oninput="renderFichas()">
-    <select id="filter-region" onchange="renderFichas()" style="padding:9px 8px;border:1.5px solid #ccc;border-radius:8px;font-size:13px;background:#fff">
-      <option value="">Todas</option>
-    </select>
+  <div style="margin-bottom:12px;margin-top:4px">
+    <div class="stats-row" id="stats-row"></div>
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="🔍 Buscar por nombre, proyecto, fecha..." oninput="renderFichas()">
+      <select id="filter-region" onchange="renderFichas()" style="padding:9px 8px;border:1.5px solid #ccc;border-radius:8px;font-size:13px;background:#fff">
+        <option value="">Todas</option>
+      </select>
+    </div>
   </div>
   <div id="fichas-list"></div>
+</div>
+
+<!-- DETALLE -->
+<div id="screen-detalle" class="screen">
+  <div style="display:flex;gap:8px;padding:12px 16px 0;align-items:center">
+    <button class="btn btn-sm btn-outline" onclick="showScreen('home')">← Volver</button>
+    <button class="btn btn-sm btn-outline" id="btn-editar-detalle" onclick="editarDesdeDetalle()">✏️ Editar</button>
+  </div>
+  <div id="detalle-content"></div>
+  <div class="detail-actions" id="detalle-actions"></div>
+  <div style="height:20px"></div>
 </div>
 
 <!-- FORM -->
@@ -332,8 +351,8 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
     <button class="btn btn-save" id="btn-guardar" onclick="saveFicha()">
       💾 <span id="btn-guardar-txt">Guardar Ficha</span>
     </button>
-    <button class="btn btn-outline" id="btn-pdf" style="display:none" onclick="exportPDF()">📄 Exportar PDF</button>
-    <button class="btn btn-danger btn-sm" id="btn-del" style="display:none" onclick="askDelete()">🗑 Eliminar</button>
+    <button class="btn btn-outline" id="btn-pdf" style="display:none" onclick="exportPDF()">📄 PDF</button>
+    <button class="btn btn-danger btn-sm" id="btn-del" style="display:none" onclick="askDelete()">🗑</button>
   </div>
 </div>
 
@@ -341,9 +360,9 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
 <div id="screen-config" class="screen">
   <div class="sec">📊 Exportar Base de Datos</div>
   <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.08)">
-    <h3 style="font-size:14px;color:var(--gd);margin-bottom:8px">📥 Exportar todas las fichas a Excel</h3>
-    <p style="font-size:13px;color:#666;margin-bottom:12px">Descarga todas las fichas en formato Excel compatible con tu base de datos Access.</p>
-    <button class="btn btn-primary" onclick="exportExcel()">📊 Descargar Excel</button>
+    <h3 style="font-size:14px;color:var(--gd);margin-bottom:8px">📥 Exportar todas las fichas</h3>
+    <p style="font-size:13px;color:#666;margin-bottom:12px">Descarga todas las fichas en formato CSV compatible con Excel y Access.</p>
+    <button class="btn btn-primary" onclick="exportExcel()">📊 Descargar CSV</button>
   </div>
   <div class="sec">⚙️ Configuración</div>
   <div class="field"><label>Proyecto predeterminado</label><input type="text" id="cfg-proyecto" onchange="saveConfig()"></div>
@@ -355,57 +374,41 @@ nav button.active{border-bottom-color:#fff;background:rgba(255,255,255,.15)}
     Android: Chrome → Menú → "Agregar a pantalla de inicio"
   </div>
   <div style="margin-top:10px;padding:12px;background:var(--gp);border-radius:10px;font-size:12px;color:var(--gd)">
-    <b>Fichas guardadas:</b> <span id="cfg-count"></span> &nbsp;|&nbsp; <b>Versión:</b> 4.1<br>
-    <b>Sync:</b> <span id="cfg-sync">Conectando...</span>
+    <b>Fichas:</b> <span id="cfg-count"></span> &nbsp;|&nbsp; <b>Versión:</b> 5.0 &nbsp;|&nbsp; <b>Sync:</b> <span id="cfg-sync">...</span>
   </div>
 </div>
 
-<!-- MODALS -->
 <div class="modal-overlay" id="modal-del">
   <div class="modal">
     <h3>⚠️ Eliminar ficha</h3>
-    <p>¿Seguro que deseas eliminar esta ficha? Se eliminará para todos los usuarios.</p>
+    <p>¿Seguro? Se eliminará para todos los usuarios.</p>
     <div class="modal-actions">
       <button class="btn btn-danger" onclick="confirmDelete()">Eliminar</button>
       <button class="btn btn-outline" onclick="closeModal('modal-del')">Cancelar</button>
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
 var CHILE = {"Arica y Parinacota":{"Arica":["Arica","Camarones"],"Parinacota":["Putre","General Lagos"]},"Tarapacá":{"Tarapacá":["Iquique","Alto Hospicio"],"El Tamarugal":["Pozo Almonte","Camiña","Colchane","Huara","Pica"]},"Antofagasta":{"Antofagasta":["Antofagasta","Mejillones","Sierra Gorda","Taltal"],"El Loa":["Calama","Ollagüe","San Pedro de Atacama"],"Tocopilla":["Tocopilla","María Elena"]},"Atacama":{"Copiapó":["Copiapó","Caldera","Tierra Amarilla"],"Chañaral":["Chañaral","Diego de Almagro"],"Huasco":["Vallenar","Alto del Carmen","Freirina","Huasco"]},"Coquimbo":{"Elqui":["La Serena","Coquimbo","Andacollo","La Higuera","Paiguano","Vicuña"],"Choapa":["Illapel","Canela","Los Vilos","Salamanca"],"Limarí":["Ovalle","Combarbalá","Monte Patria","Punitaqui","Río Hurtado"]},"Valparaíso":{"Valparaíso":["Valparaíso","Casablanca","Concón","Juan Fernández","Puchuncaví","Quintero","Viña del Mar"],"Isla de Pascua":["Isla de Pascua"],"Los Andes":["Los Andes","Calle Larga","Rinconada","San Esteban"],"Petorca":["La Ligua","Cabildo","Papudo","Petorca","Zapallar"],"Quillota":["Quillota","Calera","Hijuelas","La Cruz","Nogales"],"San Antonio":["San Antonio","Algarrobo","Cartagena","El Quisco","El Tabo","Santo Domingo"],"San Felipe de Aconcagua":["San Felipe","Catemu","Llaillay","Panquehue","Putaendo","Santa María"],"Marga Marga":["Quilpué","Limache","Olmué","Villa Alemana"]},"Metropolitana":{"Santiago":["Santiago","Cerrillos","Cerro Navia","Conchalí","El Bosque","Estación Central","Huechuraba","Independencia","La Cisterna","La Florida","La Granja","La Pintana","La Reina","Las Condes","Lo Barnechea","Lo Espejo","Lo Prado","Macul","Maipú","Ñuñoa","Pedro Aguirre Cerda","Peñalolén","Providencia","Pudahuel","Quilicura","Quinta Normal","Recoleta","Renca","San Joaquín","San Miguel","San Ramón","Vitacura"],"Cordillera":["Puente Alto","Pirque","San José de Maipo"],"Chacabuco":["Colina","Lampa","Til Til"],"Maipo":["San Bernardo","Buin","Calera de Tango","Paine"],"Melipilla":["Melipilla","Alhué","Curacaví","María Pinto","San Pedro"],"Talagante":["Talagante","El Monte","Isla de Maipo","Padre Hurtado","Peñaflor"]},"O'Higgins":{"Cachapoal":["Rancagua","Codegua","Coinco","Coltauco","Doñihue","Graneros","Las Cabras","Machalí","Malloa","Mostazal","Olivar","Peumo","Pichidegua","Quinta de Tilcoco","Rengo","Requínoa","San Vicente"],"Cardenal Caro":["Pichilemu","La Estrella","Litueche","Marchigüe","Navidad","Paredones"],"Colchagua":["San Fernando","Chépica","Chimbarongo","Lolol","Nancagua","Palmilla","Peralillo","Placilla","Pumanque","Santa Cruz"]},"Maule":{"Talca":["Talca","Constitución","Curepto","Empedrado","Maule","Pelarco","Pencahue","Río Claro","San Clemente","San Rafael"],"Cauquenes":["Cauquenes","Chanco","Pelluhue"],"Curicó":["Curicó","Hualañé","Licantén","Molina","Rauco","Romeral","Sagrada Familia","Teno","Vichuquén"],"Linares":["Linares","Colbún","Longaví","Parral","Retiro","San Javier","Villa Alegre","Yerbas Buenas"]},"Ñuble":{"Diguillín":["Chillán","Bulnes","Chillán Viejo","El Carmen","Pemuco","Pinto","Quillón","San Ignacio","Yungay"],"Itata":["Quirihue","Cobquecura","Coelemu","Ninhue","Portezuelo","Ránquil","Treguaco"],"Punilla":["San Carlos","Coihueco","Ñiquén","San Fabián","San Nicolás"]},"Biobío":{"Concepción":["Concepción","Coronel","Chiguayante","Florida","Hualqui","Lota","Penco","San Pedro de la Paz","Santa Juana","Talcahuano","Tomé","Hualpén"],"Arauco":["Lebu","Arauco","Cañete","Contulmo","Curanilahue","Los Álamos","Tirúa"],"Biobío":["Los Ángeles","Antuco","Cabrero","Laja","Mulchén","Nacimiento","Negrete","Quilaco","Quilleco","San Rosendo","Santa Bárbara","Tucapel","Yumbel"]},"La Araucanía":{"Cautín":["Temuco","Carahue","Cunco","Curarrehue","Freire","Galvarino","Gorbea","Lautaro","Loncoche","Melipeuco","Nueva Imperial","Padre las Casas","Perquenco","Pitrufquén","Pucón","Saavedra","Teodoro Schmidt","Toltén","Vilcún","Villarrica","Cholchol"],"Malleco":["Angol","Collipulli","Curacautín","Ercilla","Lonquimay","Los Sauces","Lumaco","Purén","Renaico","Traiguén","Victoria"]},"Los Ríos":{"Valdivia":["Valdivia","Corral","Futrono","La Unión","Lago Ranco","Lanco","Los Lagos","Máfil","Mariquina","Paillaco","Panguipulli","Río Bueno"]},"Los Lagos":{"Llanquihue":["Puerto Montt","Calbuco","Cochamó","Fresia","Frutillar","Los Muermos","Llanquihue","Maullín","Puerto Varas"],"Chiloé":["Castro","Ancud","Chonchi","Curaco de Vélez","Dalcahue","Puqueldón","Queilén","Quellón","Quemchi","Quinchao"],"Osorno":["Osorno","Puerto Octay","Purranque","Puyehue","Río Negro","San Juan de la Costa","San Pablo"],"Palena":["Chaitén","Futaleufú","Hualaihué","Palena"]},"Aysén":{"Coyhaique":["Coyhaique","Lago Verde"],"Aysén":["Aysén","Cisnes","Guaitecas"],"Capitán Prat":["Cochrane","O'Higgins","Tortel"],"General Carrera":["Chile Chico","Río Ibáñez"]},"Magallanes":{"Magallanes":["Punta Arenas","Laguna Blanca","Río Verde","San Gregorio"],"Antártica Chilena":["Cabo de Hornos","Antártica"],"Tierra del Fuego":["Porvenir","Primavera","Timaukel"],"Última Esperanza":["Natales","Torres del Paine"]}};
 
-var MATS = ['Cerámica','Lítico','Osteofauna','Loza','Porcelana','Gres','Vidrio','Metal','Malacológico','Textil','Cuero'];
-var fichas=[], currentId=null, photos=[], cfg={}, vertices=[], estructuras=[];
-var drawTool='pen', isDrawing=false, lastX=0, lastY=0, startX=0, startY=0, snapshot=null;
-var isOnline=false;
-var guardando=false; // ← ANTI-DUPLICADOS
-var borradorTimer=null;
+var MATS=['Cerámica','Lítico','Osteofauna','Loza','Porcelana','Gres','Vidrio','Metal','Malacológico','Textil','Cuero'];
+var fichas=[],currentId=null,photos=[],cfg={},vertices=[],estructuras=[];
+var drawTool='pen',isDrawing=false,lastX=0,lastY=0,startX=0,startY=0,snapshot=null;
+var isOnline=false,guardando=false,borradorTimer=null,detalleId=null;
 
 function init(){
   try{fichas=JSON.parse(localStorage.getItem('fichas_ays')||'[]');}catch(e){fichas=[];}
   try{cfg=JSON.parse(localStorage.getItem('cfg_ays')||'{}');}catch(e){cfg={};}
-  buildMats(); loadCfg(); populateRegiones(); renderFichas(); renderPhotos(); setToday(); initCanvas(); initChkBtns(); activarAutosave();
+  buildMats();loadCfg();populateRegiones();renderFichas();renderPhotos();setToday();initCanvas();initChkBtns();activarAutosave();
 }
 
 function updateSyncStatus(online){
   isOnline=online;
-  var dot=document.getElementById('sync-dot');
-  var banner=document.getElementById('sync-banner');
-  var cfgSync=document.getElementById('cfg-sync');
-  if(online){
-    dot.className='sync-dot online';
-    banner.className='sync-banner online';
-    banner.textContent='🟢 Sincronizado — los cambios se comparten en tiempo real';
-    if(cfgSync) cfgSync.textContent='En línea ✅';
-  } else {
-    dot.className='sync-dot offline';
-    banner.className='sync-banner offline';
-    banner.textContent='🟡 Sin conexión — trabajando offline, se sincronizará al reconectar';
-    if(cfgSync) cfgSync.textContent='Sin conexión ⚠️';
-  }
+  var dot=document.getElementById('sync-dot'),banner=document.getElementById('sync-banner'),cfgSync=document.getElementById('cfg-sync');
+  if(online){dot.className='sync-dot online';banner.className='sync-banner online';banner.textContent='🟢 Sincronizado en tiempo real';if(cfgSync)cfgSync.textContent='En línea ✅';}
+  else{dot.className='sync-dot offline';banner.className='sync-banner offline';banner.textContent='🟡 Sin conexión — se sincronizará al reconectar';if(cfgSync)cfgSync.textContent='Sin conexión ⚠️';}
 }
 
 function pad(n){return String(n).padStart(2,'0');}
@@ -417,17 +420,16 @@ function initChkBtns(){
   document.querySelectorAll('.chk-btn').forEach(function(btn){
     btn.addEventListener('click',function(e){
       e.preventDefault();
-      var isRadio=btn.getAttribute('data-radio')==='true';
-      var group=btn.getAttribute('data-group');
+      var isRadio=btn.getAttribute('data-radio')==='true',group=btn.getAttribute('data-group');
       if(isRadio){document.querySelectorAll('.chk-btn[data-group="'+group+'"]').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');}
       else{btn.classList.toggle('on');}
     });
   });
 }
-function getChkValues(group){var v=[];document.querySelectorAll('.chk-btn[data-group="'+group+'"].on').forEach(function(b){v.push(b.getAttribute('data-value'));});return v;}
-function getRadioValue(group){var b=document.querySelector('.chk-btn[data-group="'+group+'"].on');return b?b.getAttribute('data-value'):'';}
-function setChkValues(group,vals){if(!vals)return;document.querySelectorAll('.chk-btn[data-group="'+group+'"]').forEach(function(b){b.classList.toggle('on',vals.indexOf(b.getAttribute('data-value'))>=0);});}
-function setRadioValue(group,val){document.querySelectorAll('.chk-btn[data-group="'+group+'"]').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-value')===val);});}
+function getChkValues(g){var v=[];document.querySelectorAll('.chk-btn[data-group="'+g+'"].on').forEach(function(b){v.push(b.getAttribute('data-value'));});return v;}
+function getRadioValue(g){var b=document.querySelector('.chk-btn[data-group="'+g+'"].on');return b?b.getAttribute('data-value'):'';}
+function setChkValues(g,vals){if(!vals)return;document.querySelectorAll('.chk-btn[data-group="'+g+'"]').forEach(function(b){b.classList.toggle('on',vals.indexOf(b.getAttribute('data-value'))>=0);});}
+function setRadioValue(g,val){document.querySelectorAll('.chk-btn[data-group="'+g+'"]').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-value')===val);});}
 function clearAllChk(){document.querySelectorAll('.chk-btn').forEach(function(b){b.classList.remove('on');});}
 
 function populateRegiones(){var s=document.getElementById('f-region'),f=document.getElementById('filter-region');Object.keys(CHILE).forEach(function(r){var o=document.createElement('option');o.value=r;o.textContent=r;s.appendChild(o);var o2=document.createElement('option');o2.value=r;o2.textContent=r;f.appendChild(o2);});}
@@ -435,71 +437,46 @@ function updateProvincias(){var r=document.getElementById('f-region').value,p=do
 function updateComunas(){var r=document.getElementById('f-region').value,p=document.getElementById('f-provincia').value,c=document.getElementById('f-comuna');c.innerHTML='<option value="">Seleccionar...</option>';if(!r||!p||!CHILE[r]||!CHILE[r][p])return;CHILE[r][p].forEach(function(cm){var o=document.createElement('option');o.value=cm;o.textContent=cm;c.appendChild(o);});}
 function setRegion(r,p,c){document.getElementById('f-region').value=r||'';updateProvincias();if(p){document.getElementById('f-provincia').value=p;updateComunas();}if(c)document.getElementById('f-comuna').value=c;}
 
+function tiempoRelativo(ts){
+  if(!ts)return'';
+  var diff=Math.floor((Date.now()-new Date(ts).getTime())/1000);
+  if(diff<60)return'hace '+diff+'s';
+  if(diff<3600)return'hace '+Math.floor(diff/60)+'min';
+  if(diff<86400)return'hace '+Math.floor(diff/3600)+'h';
+  if(diff<604800)return'hace '+Math.floor(diff/86400)+'d';
+  return new Date(ts).toLocaleDateString('es-CL',{day:'numeric',month:'short'});
+}
+
 function showScreen(name){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.querySelectorAll('nav button').forEach(function(b){b.classList.remove('active');});
   document.getElementById('screen-'+name).classList.add('active');
-  document.getElementById('nav-'+name).classList.add('active');
-  if(name==='home') renderFichas();
-  if(name==='config') document.getElementById('cfg-count').textContent=fichas.length+' fichas';
-  if(name==='form' && !currentId) restaurarBorrador();
+  var navBtn=document.getElementById('nav-'+name);if(navBtn)navBtn.classList.add('active');
+  if(name==='home')renderFichas();
+  if(name==='config')document.getElementById('cfg-count').textContent=fichas.length+' fichas';
+  if(name==='form'&&!currentId)restaurarBorrador();
 }
 
-// ── BORRADOR AUTOMÁTICO ──────────────────────────────────────────
-function guardarBorrador(){
-  try{
-    var data=getForm();
-    localStorage.setItem('borrador_ays', JSON.stringify(data));
-  }catch(e){}
-}
-
+// BORRADOR
+function guardarBorrador(){try{localStorage.setItem('borrador_ays',JSON.stringify(getForm()));}catch(e){}}
 function restaurarBorrador(){
   try{
-    var raw=localStorage.getItem('borrador_ays');
-    if(!raw) return;
-    var d=JSON.parse(raw);
-    if(!d||(!d.sitio&&!d.proyecto&&!d.responsable)) return;
-    // Hay borrador — mostrar aviso
-    var banner=document.createElement('div');
-    banner.id='borrador-banner';
+    var raw=localStorage.getItem('borrador_ays');if(!raw)return;
+    var d=JSON.parse(raw);if(!d||(!d.sitio&&!d.proyecto&&!d.responsable))return;
+    var banner=document.createElement('div');banner.id='borrador-banner';
     banner.style.cssText='background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#856404;display:flex;justify-content:space-between;align-items:center;gap:10px;';
     banner.innerHTML='<span>📝 Tienes un borrador guardado</span><div style="display:flex;gap:8px"><button onclick="cargarBorrador()" style="background:#3a7d2c;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">Restaurar</button><button onclick="descartarBorrador()" style="background:none;border:1px solid #ccc;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer">Descartar</button></div>';
-    var form=document.getElementById('screen-form');
-    var firstChild=form.querySelector('.sec');
-    if(firstChild) form.insertBefore(banner, firstChild);
+    var form=document.getElementById('screen-form'),fc=form.querySelector('.sec');if(fc)form.insertBefore(banner,fc);
   }catch(e){}
 }
-
 function cargarBorrador(){
-  try{
-    var d=JSON.parse(localStorage.getItem('borrador_ays'));
-    if(!d) return;
-    buildMats();
-    setForm(d);
-    document.getElementById('ficha-id-badge').textContent=d.codigo||'';
-    var b=document.getElementById('borrador-banner');
-    if(b) b.remove();
-    showToast('📝 Borrador restaurado','success');
-  }catch(e){}
+  try{var d=JSON.parse(localStorage.getItem('borrador_ays'));if(!d)return;buildMats();setForm(d);document.getElementById('ficha-id-badge').textContent=d.codigo||'';var b=document.getElementById('borrador-banner');if(b)b.remove();showToast('📝 Borrador restaurado','success');}catch(e){}
 }
-
-function descartarBorrador(){
-  localStorage.removeItem('borrador_ays');
-  var b=document.getElementById('borrador-banner');
-  if(b) b.remove();
-}
-
+function descartarBorrador(){localStorage.removeItem('borrador_ays');var b=document.getElementById('borrador-banner');if(b)b.remove();}
 function activarAutosave(){
-  // Escuchar cambios en todos los inputs del formulario
-  document.querySelectorAll('#screen-form input, #screen-form textarea, #screen-form select').forEach(function(el){
-    el.addEventListener('input', function(){
-      clearTimeout(borradorTimer);
-      borradorTimer=setTimeout(guardarBorrador, 1500);
-    });
-    el.addEventListener('change', function(){
-      clearTimeout(borradorTimer);
-      borradorTimer=setTimeout(guardarBorrador, 1500);
-    });
+  document.querySelectorAll('#screen-form input,#screen-form textarea,#screen-form select').forEach(function(el){
+    el.addEventListener('input',function(){clearTimeout(borradorTimer);borradorTimer=setTimeout(guardarBorrador,1500);});
+    el.addEventListener('change',function(){clearTimeout(borradorTimer);borradorTimer=setTimeout(guardarBorrador,1500);});
   });
 }
 
@@ -515,24 +492,22 @@ function nuevaFicha(){
   document.getElementById('gps-coords').textContent='Sin coordenadas aún';
   document.getElementById('gps-status').textContent='';
   document.getElementById('f-lat').value='';document.getElementById('f-lon').value='';
-  document.getElementById('btn-pdf').style.display='none';
-  document.getElementById('btn-del').style.display='none';
-  document.getElementById('form-title').textContent='Nueva Ficha';
-  document.getElementById('ficha-id-badge').textContent='';
-  // Restaurar botón guardar
-  var btn=document.getElementById('btn-guardar');
-  btn.disabled=false;btn.className='btn btn-save';
+  document.getElementById('btn-pdf').style.display='none';document.getElementById('btn-del').style.display='none';
+  document.getElementById('form-title').textContent='Nueva Ficha';document.getElementById('ficha-id-badge').textContent='';
+  var btn=document.getElementById('btn-guardar');btn.disabled=false;btn.className='btn btn-save';
   document.getElementById('btn-guardar-txt').textContent='Guardar Ficha';
   showScreen('form');
+}
+
+function editarDesdeDetalle(){
+  if(!detalleId)return;
+  loadFicha(detalleId);
 }
 
 function addVertice(){vertices.push({ubicacion:'Dentro del AI',n:'',e:''});renderVertices();}
 function removeVertice(i){vertices.splice(i,1);renderVertices();}
 function renderVertices(){
-  var html='';
-  vertices.forEach(function(v,i){
-    html+='<div class="vtx-row"><span>'+(i+1)+'</span><input type="text" value="'+v.ubicacion+'" onchange="vertices['+i+'].ubicacion=this.value" placeholder="Ubicación"><input type="text" value="'+v.n+'" onchange="vertices['+i+'].n=this.value" placeholder="Norte"><input type="text" value="'+v.e+'" onchange="vertices['+i+'].e=this.value" placeholder="Este"><button onclick="removeVertice('+i+')">✕</button></div>';
-  });
+  var html='';vertices.forEach(function(v,i){html+='<div class="vtx-row"><span>'+(i+1)+'</span><input type="text" value="'+v.ubicacion+'" onchange="vertices['+i+'].ubicacion=this.value" placeholder="Ubicación"><input type="text" value="'+v.n+'" onchange="vertices['+i+'].n=this.value" placeholder="Norte"><input type="text" value="'+v.e+'" onchange="vertices['+i+'].e=this.value" placeholder="Este"><button onclick="removeVertice('+i+')">✕</button></div>';});
   document.getElementById('vtx-list').innerHTML=html;
 }
 
@@ -541,12 +516,12 @@ function removeEstructura(i){estructuras.splice(i,1);renderEstructuras();}
 function renderEstructuras(){
   var html='';
   estructuras.forEach(function(e,i){
-    html+='<div class="est-row"><div class="est-row-header"><span>🧱 Estructura '+(i+1)+'</span><button class="btn btn-danger btn-sm" onclick="removeEstructura('+i+')">✕ Eliminar</button></div>';
-    html+='<div class="field"><label>Nombre / ID estructura</label><input type="text" value="'+(e.nombre||'')+'" onchange="estructuras['+i+'].nombre=this.value" placeholder="Ej: E1, Muro norte..."></div>';
-    html+='<div class="row3"><div class="field"><label>Largo (m)</label><input type="number" step="any" value="'+(e.largo||'')+'" onchange="estructuras['+i+'].largo=this.value" placeholder="0.00"></div><div class="field"><label>Ancho (m)</label><input type="number" step="any" value="'+(e.ancho||'')+'" onchange="estructuras['+i+'].ancho=this.value" placeholder="0.00"></div><div class="field"><label>Alto (m)</label><input type="number" step="any" value="'+(e.alto||'')+'" onchange="estructuras['+i+'].alto=this.value" placeholder="0.00"></div></div>';
-    html+='<div class="row2"><div class="field"><label>Forma</label><select onchange="estructuras['+i+'].forma=this.value"><option value="">Seleccionar...</option><option'+(e.forma==='Rectangular'?' selected':'')+'>Rectangular</option><option'+(e.forma==='Circular'?' selected':'')+'>Circular</option><option'+(e.forma==='Semicircular'?' selected':'')+'>Semicircular</option><option'+(e.forma==='Irregular'?' selected':'')+'>Irregular</option><option'+(e.forma==='Cuadrangular'?' selected':'')+'>Cuadrangular</option><option'+(e.forma==='Otra'?' selected':'')+'>Otra</option></select></div><div class="field"><label>Materialidad</label><select onchange="estructuras['+i+'].materialidad=this.value"><option value="">Seleccionar...</option><option'+(e.materialidad==='Piedra seca'?' selected':'')+'>Piedra seca</option><option'+(e.materialidad==='Piedra con barro'?' selected':'')+'>Piedra con barro</option><option'+(e.materialidad==='Adobe'?' selected':'')+'>Adobe</option><option'+(e.materialidad==='Tapia'?' selected':'')+'>Tapia</option><option'+(e.materialidad==='Mixta'?' selected':'')+'>Mixta</option><option'+(e.materialidad==='Otra'?' selected':'')+'>Otra</option></select></div></div>';
-    html+='<div class="row3"><div class="field"><label>N° Hileras</label><input type="number" min="0" value="'+(e.hileras||'')+'" onchange="estructuras['+i+'].hileras=this.value" placeholder="0"></div><div class="field"><label>N° Hiladas</label><input type="number" min="0" value="'+(e.hiladas||'')+'" onchange="estructuras['+i+'].hiladas=this.value" placeholder="0"></div><div class="field"><label>Vanos</label><input type="number" min="0" value="'+(e.vanos||'')+'" onchange="estructuras['+i+'].vanos=this.value" placeholder="0"></div></div>';
-    html+='<div class="field"><label>Observaciones estructura</label><textarea onchange="estructuras['+i+'].obs=this.value" placeholder="Descripción adicional...">'+(e.obs||'')+'</textarea></div></div>';
+    html+='<div class="est-row"><div class="est-row-header"><span>🧱 Estructura '+(i+1)+'</span><button class="btn btn-danger btn-sm" onclick="removeEstructura('+i+')">✕</button></div>';
+    html+='<div class="field"><label>Nombre / ID</label><input type="text" value="'+(e.nombre||'')+'" onchange="estructuras['+i+'].nombre=this.value" placeholder="Ej: E1..."></div>';
+    html+='<div class="row3"><div class="field"><label>Largo (m)</label><input type="number" step="any" value="'+(e.largo||'')+'" onchange="estructuras['+i+'].largo=this.value"></div><div class="field"><label>Ancho (m)</label><input type="number" step="any" value="'+(e.ancho||'')+'" onchange="estructuras['+i+'].ancho=this.value"></div><div class="field"><label>Alto (m)</label><input type="number" step="any" value="'+(e.alto||'')+'" onchange="estructuras['+i+'].alto=this.value"></div></div>';
+    html+='<div class="row2"><div class="field"><label>Forma</label><select onchange="estructuras['+i+'].forma=this.value"><option value="">...</option><option'+(e.forma==='Rectangular'?' selected':'')+'>Rectangular</option><option'+(e.forma==='Circular'?' selected':'')+'>Circular</option><option'+(e.forma==='Semicircular'?' selected':'')+'>Semicircular</option><option'+(e.forma==='Irregular'?' selected':'')+'>Irregular</option><option'+(e.forma==='Cuadrangular'?' selected':'')+'>Cuadrangular</option><option'+(e.forma==='Otra'?' selected':'')+'>Otra</option></select></div><div class="field"><label>Materialidad</label><select onchange="estructuras['+i+'].materialidad=this.value"><option value="">...</option><option'+(e.materialidad==='Piedra seca'?' selected':'')+'>Piedra seca</option><option'+(e.materialidad==='Piedra con barro'?' selected':'')+'>Piedra con barro</option><option'+(e.materialidad==='Adobe'?' selected':'')+'>Adobe</option><option'+(e.materialidad==='Tapia'?' selected':'')+'>Tapia</option><option'+(e.materialidad==='Mixta'?' selected':'')+'>Mixta</option><option'+(e.materialidad==='Otra'?' selected':'')+'>Otra</option></select></div></div>';
+    html+='<div class="row3"><div class="field"><label>Hileras</label><input type="number" min="0" value="'+(e.hileras||'')+'" onchange="estructuras['+i+'].hileras=this.value"></div><div class="field"><label>Hiladas</label><input type="number" min="0" value="'+(e.hiladas||'')+'" onchange="estructuras['+i+'].hiladas=this.value"></div><div class="field"><label>Vanos</label><input type="number" min="0" value="'+(e.vanos||'')+'" onchange="estructuras['+i+'].vanos=this.value"></div></div>';
+    html+='<div class="field"><label>Observaciones</label><textarea onchange="estructuras['+i+'].obs=this.value">'+(e.obs||'')+'</textarea></div></div>';
   });
   document.getElementById('estructuras-list').innerHTML=html;
 }
@@ -561,11 +536,11 @@ function getGPS(){
   function done(){if(watchId!==null)navigator.geolocation.clearWatch(watchId);clearTimeout(timeout);btn.disabled=false;btn.textContent='📡 Actualizar GPS';}
   watchId=navigator.geolocation.watchPosition(function(pos){
     var lat=pos.coords.latitude,lon=pos.coords.longitude,acc=pos.coords.accuracy,alt=pos.coords.altitude;
-    attempts++;status.textContent='Lectura '+attempts+'/8 — precisión: ±'+Math.round(acc)+' m';
+    attempts++;status.textContent='Lectura '+attempts+'/8 — ±'+Math.round(acc)+' m';
     if(acc<bestAcc){bestAcc=acc;document.getElementById('f-lat').value=lat.toFixed(6);document.getElementById('f-lon').value=lon.toFixed(6);if(alt)document.getElementById('f-altitud').value=Math.round(alt);document.getElementById('f-error').value=Math.round(acc);var utm=toUTM(lat,lon);document.getElementById('f-utmn').value=Math.round(utm.N);document.getElementById('f-utme').value=Math.round(utm.E);document.getElementById('f-huso').value=utm.zone;coords.textContent='UTM N: '+Math.round(utm.N)+'  E: '+Math.round(utm.E)+'  Huso: '+utm.zone;}
-    if(acc<=5||attempts>=8){done();status.textContent='✅ Precisión final: ±'+Math.round(bestAcc)+' m';}
+    if(acc<=5||attempts>=8){done();status.textContent='✅ Precisión: ±'+Math.round(bestAcc)+' m';}
   },function(err){done();status.textContent='❌ '+err.message;},{enableHighAccuracy:true,timeout:20000,maximumAge:0});
-  timeout=setTimeout(function(){done();status.textContent=bestAcc<Infinity?'✅ Mejor precisión: ±'+Math.round(bestAcc)+' m':'⏱ Sin señal GPS.';},25000);
+  timeout=setTimeout(function(){done();status.textContent=bestAcc<Infinity?'✅ Mejor: ±'+Math.round(bestAcc)+' m':'⏱ Sin señal.';},25000);
 }
 
 function toUTM(lat,lon){
@@ -578,7 +553,7 @@ function toUTM(lat,lon){
   var M=a*((1-e2/4-3*e2*e2/64)*phi-(3*e2/8+3*e2*e2/32)*Math.sin(2*phi)+(15*e2*e2/256)*Math.sin(4*phi));
   var E=k0*N*(A+(1-T+C)*A*A*A/6+(5-18*T+T*T+72*C)*A*A*A*A*A/120)+E0;
   var Nn=k0*(M+N*Math.tan(phi)*(A*A/2+(5-T+9*C+4*C*C)*A*A*A*A/24+(61-58*T+T*T+600*C)*A*A*A*A*A*A/720))+N0;
-  return {E:E,N:Nn,zone:zone+(lat>=0?'':'S')};
+  return{E:E,N:Nn,zone:zone+(lat>=0?'':'S')};
 }
 function calcArea(){var l=parseFloat(document.getElementById('f-largo').value)||0,a=parseFloat(document.getElementById('f-ancho').value)||0;if(l&&a)document.getElementById('f-area').value=(l*a).toFixed(2);}
 
@@ -601,57 +576,15 @@ function addPhoto(e){Array.from(e.target.files).forEach(function(f){var r=new Fi
 function renderPhotos(){var h=photos.map(function(p,i){return '<div class="photo-thumb"><img src="'+p+'"><button class="del-photo" onclick="removePhoto('+i+')">×</button></div>';}).join('');h+='<label class="add-photo-btn" for="photo-input"><span style="font-size:28px">📷</span><span>Agregar</span></label>';document.getElementById('photos-grid').innerHTML=h;}
 function removePhoto(i){photos.splice(i,1);renderPhotos();}
 
-function nextId(){var max=0;fichas.forEach(function(f){if(f.codigo){var n=parseInt(f.codigo.replace('RS-',''));if(n>max)max=n;}});return 'RS-'+String(max+1).padStart(3,'0');}
+function nextId(){var max=0;fichas.forEach(function(f){if(f.codigo){var n=parseInt(f.codigo.replace('RS-',''));if(n>max)max=n;}});return'RS-'+String(max+1).padStart(3,'0');}
 
 function getForm(){
   var mats={};MATS.forEach(function(m){var q=document.getElementById('mq-'+m),d=document.getElementById('md-'+m);mats[m]={qty:q?q.value:'',desc:d?d.value:''};});
-  return {
-    id:currentId||String(Date.now()),
-    codigo:document.getElementById('ficha-id-badge').textContent||nextId(),
-    sitio:document.getElementById('f-sitio').value,
-    proyecto:document.getElementById('f-proyecto').value,
-    region:document.getElementById('f-region').value,
-    provincia:document.getElementById('f-provincia').value,
-    comuna:document.getElementById('f-comuna').value,
-    lat:document.getElementById('f-lat').value,
-    lon:document.getElementById('f-lon').value,
-    utmN:document.getElementById('f-utmn').value,
-    utmE:document.getElementById('f-utme').value,
-    huso:document.getElementById('f-huso').value,
-    error:document.getElementById('f-error').value,
-    altitud:document.getElementById('f-altitud').value,
-    vertices:vertices,
-    tipo:document.getElementById('f-tipo').value,
-    tipologia:getChkValues('tipologia'),
-    tipologiaOtro:document.getElementById('f-tipologia-otro').value,
-    periodo:getChkValues('periodo'),
-    periodoEsp:document.getElementById('f-periodo-esp').value,
-    recoleccion:getRadioValue('recoleccion'),
-    largo:document.getElementById('f-largo').value,
-    ancho:document.getElementById('f-ancho').value,
-    area:document.getElementById('f-area').value,
-    mats:mats,
-    diagnosticos:document.getElementById('f-diagnosticos').value,
-    estructuras:estructuras,
-    emplazamiento:getChkValues('emplazamiento'),
-    emplOtro:document.getElementById('f-empl-otro').value,
-    emplDesc:document.getElementById('f-empl-desc').value,
-    conservacion:getRadioValue('conservacion'),
-    consDesc:document.getElementById('f-cons-desc').value,
-    responsable:document.getElementById('f-responsable').value,
-    ayudantes:document.getElementById('f-ayudantes').value,
-    fecha:document.getElementById('f-fecha').value,
-    campana:document.getElementById('f-campana').value,
-    obs:document.getElementById('f-obs').value,
-    croquis:getCanvasData(),
-    photos:photos,
-    ts:new Date().toISOString()
-  };
+  return{id:currentId||String(Date.now()),codigo:document.getElementById('ficha-id-badge').textContent||nextId(),sitio:document.getElementById('f-sitio').value,proyecto:document.getElementById('f-proyecto').value,region:document.getElementById('f-region').value,provincia:document.getElementById('f-provincia').value,comuna:document.getElementById('f-comuna').value,lat:document.getElementById('f-lat').value,lon:document.getElementById('f-lon').value,utmN:document.getElementById('f-utmn').value,utmE:document.getElementById('f-utme').value,huso:document.getElementById('f-huso').value,error:document.getElementById('f-error').value,altitud:document.getElementById('f-altitud').value,vertices:vertices,tipo:document.getElementById('f-tipo').value,tipologia:getChkValues('tipologia'),tipologiaOtro:document.getElementById('f-tipologia-otro').value,periodo:getChkValues('periodo'),periodoEsp:document.getElementById('f-periodo-esp').value,recoleccion:getRadioValue('recoleccion'),largo:document.getElementById('f-largo').value,ancho:document.getElementById('f-ancho').value,area:document.getElementById('f-area').value,mats:mats,diagnosticos:document.getElementById('f-diagnosticos').value,estructuras:estructuras,emplazamiento:getChkValues('emplazamiento'),emplOtro:document.getElementById('f-empl-otro').value,emplDesc:document.getElementById('f-empl-desc').value,conservacion:getRadioValue('conservacion'),consDesc:document.getElementById('f-cons-desc').value,responsable:document.getElementById('f-responsable').value,ayudantes:document.getElementById('f-ayudantes').value,fecha:document.getElementById('f-fecha').value,campana:document.getElementById('f-campana').value,obs:document.getElementById('f-obs').value,croquis:getCanvasData(),photos:photos,ts:new Date().toISOString()};
 }
 
 function setForm(d){
-  document.getElementById('f-sitio').value=d.sitio||'';
-  document.getElementById('f-proyecto').value=d.proyecto||'';
+  document.getElementById('f-sitio').value=d.sitio||'';document.getElementById('f-proyecto').value=d.proyecto||'';
   setRegion(d.region,d.provincia,d.comuna);
   document.getElementById('f-lat').value=d.lat||'';document.getElementById('f-lon').value=d.lon||'';
   document.getElementById('f-utmn').value=d.utmN||'';document.getElementById('f-utme').value=d.utmE||'';document.getElementById('f-huso').value=d.huso||'';
@@ -676,78 +609,129 @@ function setForm(d){
 }
 
 async function saveFicha(){
-  // ── ANTI-DUPLICADOS ──────────────────────────────
-  if(guardando) return;
-
+  if(guardando)return;
   var data=getForm();
   if(!data.sitio){showToast('⚠️ Ingresa el nombre del sitio','error');return;}
-  if(!data.codigo) data.codigo=nextId();
-
-  // Bloquear botón
+  if(!data.codigo)data.codigo=nextId();
   guardando=true;
-  var btn=document.getElementById('btn-guardar');
-  var btnTxt=document.getElementById('btn-guardar-txt');
-  btn.disabled=true;
-  btn.classList.add('saving');
-  btnTxt.textContent='Guardando...';
-
-  // Guardar local primero
+  var btn=document.getElementById('btn-guardar'),btnTxt=document.getElementById('btn-guardar-txt');
+  btn.disabled=true;btn.classList.add('saving');btnTxt.textContent='Guardando...';
   var idx=-1;fichas.forEach(function(f,i){if(f.id===data.id)idx=i;});
   if(idx>=0)fichas[idx]=data;else fichas.unshift(data);
   localStorage.setItem('fichas_ays',JSON.stringify(fichas));
-  localStorage.removeItem('borrador_ays'); // Limpiar borrador al guardar
-
-  // Guardar en Firebase
-  var syncOk=false;
-  if(window._fbSave){
-    syncOk=await window._fbSave(data);
-  }
-
-  // Feedback visual
-  btn.classList.remove('saving');
-  btn.classList.add('saved');
-  if(syncOk){
-    btnTxt.textContent='✅ '+data.codigo+' guardada';
-    showToast('✅ '+data.codigo+' guardada y sincronizada ☁️','success');
-  } else {
-    btnTxt.textContent='💾 '+data.codigo+' guardada';
-    showToast('💾 '+data.codigo+' guardada localmente (sin conexión)');
-  }
-
+  localStorage.removeItem('borrador_ays');
+  var syncOk=false;if(window._fbSave)syncOk=await window._fbSave(data);
+  btn.classList.remove('saving');btn.classList.add('saved');
+  if(syncOk){btnTxt.textContent='✅ '+data.codigo+' guardada';showToast('✅ '+data.codigo+' guardada y sincronizada ☁️','success');}
+  else{btnTxt.textContent='💾 '+data.codigo+' guardada';showToast('💾 '+data.codigo+' guardada localmente');}
   currentId=data.id;
-  document.getElementById('btn-pdf').style.display='inline-flex';
-  document.getElementById('btn-del').style.display='inline-flex';
-  document.getElementById('form-title').textContent='Editando: '+data.sitio;
-  document.getElementById('ficha-id-badge').textContent=data.codigo;
-
-  // Desbloquear después de 2 segundos
-  setTimeout(function(){
-    guardando=false;
-    btn.disabled=false;
-    btn.className='btn btn-save';
-    btnTxt.textContent='💾 Guardar Ficha';
-  }, 2000);
+  document.getElementById('btn-pdf').style.display='inline-flex';document.getElementById('btn-del').style.display='inline-flex';
+  document.getElementById('form-title').textContent='Editando: '+data.sitio;document.getElementById('ficha-id-badge').textContent=data.codigo;
+  setTimeout(function(){guardando=false;btn.disabled=false;btn.className='btn btn-save';btnTxt.textContent='💾 Guardar Ficha';},2000);
 }
 
 function loadFicha(id){
-  var d=null;fichas.forEach(function(f){if(f.id===id)d=f;});
-  if(!d)return;
+  var d=null;fichas.forEach(function(f){if(f.id===id)d=f;});if(!d)return;
   currentId=id;buildMats();setForm(d);
-  document.getElementById('btn-pdf').style.display='inline-flex';
-  document.getElementById('btn-del').style.display='inline-flex';
-  document.getElementById('form-title').textContent='Editando: '+d.sitio;
-  document.getElementById('ficha-id-badge').textContent=d.codigo||'';
-  guardando=false;
-  showScreen('form');
+  document.getElementById('btn-pdf').style.display='inline-flex';document.getElementById('btn-del').style.display='inline-flex';
+  document.getElementById('form-title').textContent='Editando: '+d.sitio;document.getElementById('ficha-id-badge').textContent=d.codigo||'';
+  guardando=false;showScreen('form');
+}
+
+function verDetalle(id){
+  var f=null;fichas.forEach(function(x){if(x.id===id)f=x;});if(!f)return;
+  detalleId=id;
+  var totalMat=(f.mats?Object.values(f.mats).reduce(function(s,m){return s+(parseInt(m.qty)||0);},0):0);
+  var heroHtml='<div class="detail-hero">';
+  if(f.photos&&f.photos.length){heroHtml+='<img src="'+f.photos[0]+'">';}
+  heroHtml+='<div class="detail-hero-overlay"><div class="detail-hero-id">'+(f.codigo||'')+'</div><div class="detail-hero-title">'+(f.sitio||'Sin nombre')+'</div><div class="detail-hero-sub">'+(f.proyecto||'')+(f.region?' · '+f.region:'')+'</div></div></div>';
+
+  var html=heroHtml;
+
+  // Info general
+  html+='<div class="detail-section"><div class="detail-sec-title">📋 Identificación</div>';
+  html+='<div class="detail-row"><span class="detail-key">Responsable</span><span class="detail-val">'+(f.responsable||'—')+'</span></div>';
+  html+='<div class="detail-row"><span class="detail-key">Fecha</span><span class="detail-val">'+(f.fecha||'—')+'</span></div>';
+  html+='<div class="detail-row"><span class="detail-key">Campaña</span><span class="detail-val">'+(f.campana||'—')+'</span></div>';
+  html+='<div class="detail-row"><span class="detail-key">Ayudantes</span><span class="detail-val">'+(f.ayudantes||'—')+'</span></div>';
+  html+='<div class="detail-row"><span class="detail-key">Región</span><span class="detail-val">'+(f.region||'—')+'</span></div>';
+  html+='<div class="detail-row"><span class="detail-key">Provincia/Comuna</span><span class="detail-val">'+(f.provincia||'—')+(f.comuna?', '+f.comuna:'')+'</span></div></div>';
+
+  // GPS
+  if(f.utmN||f.utmE){
+    html+='<div class="detail-section"><div class="detail-sec-title">📍 Coordenadas WGS84</div>';
+    html+='<div class="detail-row"><span class="detail-key">UTM Norte</span><span class="detail-val">'+(f.utmN||'—')+'</span></div>';
+    html+='<div class="detail-row"><span class="detail-key">UTM Este</span><span class="detail-val">'+(f.utmE||'—')+'</span></div>';
+    html+='<div class="detail-row"><span class="detail-key">Huso</span><span class="detail-val">'+(f.huso||'—')+'</span></div>';
+    html+='<div class="detail-row"><span class="detail-key">Altitud</span><span class="detail-val">'+(f.altitud?f.altitud+' msnm':'—')+'</span></div>';
+    html+='<div class="detail-row"><span class="detail-key">Error GPS</span><span class="detail-val">'+(f.error?'±'+f.error+' m':'—')+'</span></div></div>';
+  }
+
+  // Características
+  html+='<div class="detail-section"><div class="detail-sec-title">🏛 Características</div>';
+  html+='<div class="detail-row"><span class="detail-key">Tipo</span><span class="detail-val">'+(f.tipo||'—')+'</span></div>';
+  html+='<div class="detail-row"><span class="detail-key">Tipología</span><span class="detail-val">'+((f.tipologia||[]).join(', ')||'—')+'</span></div>';
+  html+='<div class="detail-row"><span class="detail-key">Período</span><span class="detail-val">'+((f.periodo||[]).join(', ')||'—')+(f.periodoEsp?' ('+f.periodoEsp+')':'')+'</span></div>';
+  html+='<div class="detail-row"><span class="detail-key">Emplazamiento</span><span class="detail-val">'+((f.emplazamiento||[]).join(', ')||'—')+'</span></div>';
+  html+='<div class="detail-row"><span class="detail-key">Conservación</span><span class="detail-val">'+(f.conservacion||'—')+'</span></div>';
+  html+='<div class="detail-row"><span class="detail-key">Dimensiones</span><span class="detail-val">'+(f.largo?f.largo+'m × '+f.ancho+'m = '+f.area+'m²':'—')+'</span></div></div>';
+
+  // Materiales
+  if(totalMat>0){
+    html+='<div class="detail-section"><div class="detail-sec-title">🪨 Material ('+totalMat+' piezas)</div>';
+    MATS.forEach(function(m){var md=f.mats&&f.mats[m];if(md&&md.qty&&parseInt(md.qty)>0){html+='<div class="detail-row"><span class="detail-key">'+m+'</span><span class="detail-val">'+md.qty+(md.desc?' — '+md.desc:'')+'</span></div>';}});
+    html+='</div>';
+  }
+
+  // Fotos
+  if(f.photos&&f.photos.length>0){
+    html+='<div class="detail-section"><div class="detail-sec-title">📸 Fotografías ('+f.photos.length+')</div><div class="detail-photos">';
+    f.photos.forEach(function(p){html+='<div class="detail-photo"><img src="'+p+'"></div>';});
+    html+='</div></div>';
+  }
+
+  // Observaciones
+  if(f.obs){
+    html+='<div class="detail-section"><div class="detail-sec-title">📝 Observaciones</div><div style="padding:12px 14px;font-size:13px;line-height:1.6;color:var(--text)">'+f.obs+'</div></div>';
+  }
+
+  document.getElementById('detalle-content').innerHTML=html;
+
+  // Acciones
+  var acciones='';
+  acciones+='<button class="btn btn-primary" onclick="compartirWhatsApp(\''+id+'\')">📲 Compartir WhatsApp</button>';
+  acciones+='<button class="btn btn-outline" onclick="loadFicha(\''+id+'\');exportPDF()">📄 Exportar PDF</button>';
+  acciones+='<button class="btn btn-danger btn-sm" onclick="detalleId=\''+id+'\';currentId=\''+id+'\';askDelete()">🗑 Eliminar</button>';
+  document.getElementById('detalle-actions').innerHTML=acciones;
+
+  showScreen('detalle');
+}
+
+function compartirWhatsApp(id){
+  var f=null;fichas.forEach(function(x){if(x.id===id)f=x;});if(!f)return;
+  var totalMat=(f.mats?Object.values(f.mats).reduce(function(s,m){return s+(parseInt(m.qty)||0);},0):0);
+  var msg='🏛 *Ficha Arqueológica '+(f.codigo||'')+'*\n\n';
+  msg+='📍 *Sitio:* '+(f.sitio||'—')+'\n';
+  msg+='📁 *Proyecto:* '+(f.proyecto||'—')+'\n';
+  msg+='🗓 *Fecha:* '+(f.fecha||'—')+'\n';
+  msg+='👤 *Responsable:* '+(f.responsable||'—')+'\n';
+  msg+='🌍 *Ubicación:* '+(f.region||'—')+(f.comuna?', '+f.comuna:'')+'\n';
+  if(f.utmN)msg+='📡 *UTM:* N '+f.utmN+' E '+f.utmE+' H'+f.huso+'\n';
+  if(f.tipo)msg+='🏛 *Tipo:* '+f.tipo+'\n';
+  if(f.conservacion)msg+='📊 *Conservación:* '+f.conservacion+'\n';
+  if(totalMat)msg+='🪨 *Material:* '+totalMat+' piezas\n';
+  msg+='\n_Enviado desde ArqField — Ambiental y Sectorial_';
+  var url='https://wa.me/?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
 }
 
 function askDelete(){document.getElementById('modal-del').classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 async function confirmDelete(){
-  if(window._fbDelete) await window._fbDelete(currentId);
+  if(window._fbDelete)await window._fbDelete(currentId);
   fichas=fichas.filter(function(f){return f.id!==currentId;});
   localStorage.setItem('fichas_ays',JSON.stringify(fichas));
-  closeModal('modal-del');nuevaFicha();showScreen('home');showToast('🗑 Ficha eliminada');
+  closeModal('modal-del');showScreen('home');showToast('🗑 Ficha eliminada');
 }
 
 function renderFichas(){
@@ -758,61 +742,65 @@ function renderFichas(){
     var match=!q||(f.sitio&&f.sitio.toLowerCase().includes(q))||(f.proyecto&&f.proyecto.toLowerCase().includes(q))||(f.fecha&&f.fecha.includes(q))||(f.codigo&&f.codigo.toLowerCase().includes(q));
     return match&&(!r||f.region===r);
   });
-  document.getElementById('ficha-count').textContent=filtered.length+'/'+fichas.length+' fichas';
+
+  // Stats
+  var proyectos={};fichas.forEach(function(f){if(f.proyecto)proyectos[f.proyecto]=(proyectos[f.proyecto]||0)+1;});
+  var totalMat=fichas.reduce(function(s,f){return s+(f.mats?Object.values(f.mats).reduce(function(ss,m){return ss+(parseInt(m.qty)||0);},0):0);},0);
+  var conGps=fichas.filter(function(f){return f.lat;}).length;
+  document.getElementById('stats-row').innerHTML=
+    '<div class="stat-card"><div class="stat-num">'+fichas.length+'</div><div class="stat-label">Fichas</div></div>'+
+    '<div class="stat-card"><div class="stat-num">'+totalMat+'</div><div class="stat-label">Piezas</div></div>'+
+    '<div class="stat-card"><div class="stat-num">'+conGps+'</div><div class="stat-label">Con GPS</div></div>';
+
   if(!fichas.length){list.innerHTML='<div class="empty"><div class="icon">🏛</div><p>No hay fichas guardadas.<br>Toca <b>Nueva</b> para comenzar.</p></div>';return;}
   if(!filtered.length){list.innerHTML='<div class="empty"><div class="icon">🔍</div><p>No hay fichas que coincidan.</p></div>';return;}
+
+  // Agrupar por proyecto
+  var grupos={};
+  filtered.forEach(function(f){var k=f.proyecto||'Sin proyecto';if(!grupos[k])grupos[k]=[];grupos[k].push(f);});
+
   var html='';
-  filtered.forEach(function(f){
-    var b='';
-    if(f.codigo)b+='<span class="badge">'+f.codigo+'</span>';
-    if(f.fecha)b+='<span class="badge">📅 '+f.fecha+'</span>';
-    if(f.estructuras&&f.estructuras.length)b+='<span class="badge">🧱 '+f.estructuras.length+' estr.</span>';
-    if(f.lat)b+='<span class="badge">🌐 GPS</span>';
-    if(f.photos&&f.photos.length)b+='<span class="badge">📷 '+f.photos.length+'</span>';
-    html+='<div class="ficha-card" onclick="loadFicha(\''+f.id+'\')"><h3>📍 '+(f.sitio||'Sin nombre')+'</h3><p>'+(f.proyecto||'')+(f.region?' — '+f.region:'')+'</p><div class="badges">'+b+'</div></div>';
+  Object.keys(grupos).forEach(function(proy){
+    html+='<div class="proyecto-group-title">📁 '+proy+' <span style="color:#aaa;font-weight:400">('+grupos[proy].length+')</span></div>';
+    grupos[proy].forEach(function(f){
+      var coverHtml=f.photos&&f.photos.length?'<img class="ficha-card-cover" src="'+f.photos[0]+'" loading="lazy">':'<div class="ficha-card-cover-placeholder"></div>';
+      var b='';
+      if(f.codigo)b+='<span class="badge">'+f.codigo+'</span>';
+      if(f.lat)b+='<span class="badge">🌐 GPS</span>';
+      if(f.photos&&f.photos.length)b+='<span class="badge">📷 '+f.photos.length+'</span>';
+      if(f.estructuras&&f.estructuras.length)b+='<span class="badge">🧱 '+f.estructuras.length+'</span>';
+      html+='<div class="ficha-card" onclick="verDetalle(\''+f.id+'\')">';
+      html+=coverHtml;
+      html+='<div class="ficha-card-body">';
+      html+='<div class="ficha-card-top"><div class="ficha-card-sitio">'+(f.sitio||'Sin nombre')+'</div><div class="ficha-card-tiempo">'+tiempoRelativo(f.ts)+'</div></div>';
+      html+='<div class="ficha-card-proyecto">'+(f.responsable||'—')+(f.region?' · '+f.region:'')+'</div>';
+      html+='<div class="badges">'+b+'</div></div></div>';
+    });
   });
   list.innerHTML=html;
 }
 
 function exportExcel(){
   if(!fichas.length){showToast('No hay fichas para exportar');return;}
-  showToast('⏳ Generando Excel...');
+  showToast('⏳ Generando CSV...');
   var headers=['ID Proyecto','Proyecto','ID','WGS84 UTM N','UTM E','HUSO','Error GPS +-','ALTITUD','REGIÓN','PROVINCIA','COMUNA','Categoria Patrimonial','Tipo','N° objetos hallazgo aislado','Tipología funcional','Otro','Cronología','Cronología específica','Cerámica','Lítico','Malacológico','Osteofauna','Metal','Vidrio','Porcelana','Loza','Otros','Descripción Otros','Descripción de evidencias muebles en el sitio o hallazgo aislado','Estructura demarcatoria','Estructura habitacional','Estructura productiva','Estructura indeterminada','Conchal','Arte rupestre','Rasgo lineal','Rasgo estructural','Otro','Descripción Otros','Descripción de evidencias inmuebles en el sitio o hallazgo aislado','Potencial estratigráfico','Descripción del potencial estratigráfico','m largo','m ancho','Área m2','Poligono Irregular','Punto 1 Ubicación','Punto 1 Coordenada N','Punto 1 Coordenada E','Punto 2 Ubicación','Punto 2 Coordenada N','Punto 2 Coordenada E','Punto 3 Ubicación','Punto 3 Coordenada N','Punto 3 Coordenada E','Punto 4 Ubicación','Punto 4 Coordenada N','Punto 4 Coordenada E','Punto 5 Ubicación','Punto 5 Coordenada N','Punto 5 Coordenada E','Punto 6 Ubicación','Punto 6 Coordenada N','Punto 6 Coordenada E','Punto 7 Ubicación','Punto 7 Coordenada N','Punto 7 Coordenada E','Asociación con otros hallazgos arqueológicos','Emplazamiento','Descripción general del emplazamiento','Estado de conservación','Descripción estado de conservación','Afectación antrópica','Afectación natural','Registrado por','Fecha','Hora','Registro previo','Observaciones','Status'];
   var rows=fichas.map(function(f){
     var mats=f.mats||{},vtx=f.vertices||[];
-    function vp(i,field){return vtx[i]?vtx[i][field]||'':'';}
+    function vp(i,field){return vtx[i]?vtx[i][field]||'':]'';}
     var tipologia=(f.tipologia||[]).join(', ');if(f.tipologiaOtro)tipologia+=(tipologia?', ':'')+f.tipologiaOtro;
     var periodo=(f.periodo||[]).join(', ');
     var empl=(f.emplazamiento||[]).join(', ');if(f.emplOtro)empl+=(empl?', ':'')+f.emplOtro;
-    return ['',f.proyecto||'',f.codigo||'',f.utmN||'',f.utmE||'',f.huso||'',f.error||'',f.altitud||'',f.region||'',f.provincia||'',f.comuna||'','',f.tipo||'','',tipologia,f.tipologiaOtro||'',periodo,f.periodoEsp||'',mats['Cerámica']&&mats['Cerámica'].qty||'',mats['Lítico']&&mats['Lítico'].qty||'',mats['Malacológico']&&mats['Malacológico'].qty||'',mats['Osteofauna']&&mats['Osteofauna'].qty||'',mats['Metal']&&mats['Metal'].qty||'',mats['Vidrio']&&mats['Vidrio'].qty||'',mats['Porcelana']&&mats['Porcelana'].qty||'',mats['Loza']&&mats['Loza'].qty||'','','',f.diagnosticos||'','','','','','','','','','','','','',f.largo||'',f.ancho||'',f.area||'','',vp(0,'ubicacion'),vp(0,'n'),vp(0,'e'),vp(1,'ubicacion'),vp(1,'n'),vp(1,'e'),vp(2,'ubicacion'),vp(2,'n'),vp(2,'e'),vp(3,'ubicacion'),vp(3,'n'),vp(3,'e'),vp(4,'ubicacion'),vp(4,'n'),vp(4,'e'),vp(5,'ubicacion'),vp(5,'n'),vp(5,'e'),vp(6,'ubicacion'),vp(6,'n'),vp(6,'e'),'',empl,f.emplDesc||'',f.conservacion||'',f.consDesc||'','','',f.responsable||'',f.fecha||'','','',f.obs||'',''];
+    return['',f.proyecto||'',f.codigo||'',f.utmN||'',f.utmE||'',f.huso||'',f.error||'',f.altitud||'',f.region||'',f.provincia||'',f.comuna||'','',f.tipo||'','',tipologia,f.tipologiaOtro||'',periodo,f.periodoEsp||'',mats['Cerámica']&&mats['Cerámica'].qty||'',mats['Lítico']&&mats['Lítico'].qty||'',mats['Malacológico']&&mats['Malacológico'].qty||'',mats['Osteofauna']&&mats['Osteofauna'].qty||'',mats['Metal']&&mats['Metal'].qty||'',mats['Vidrio']&&mats['Vidrio'].qty||'',mats['Porcelana']&&mats['Porcelana'].qty||'',mats['Loza']&&mats['Loza'].qty||'','','',f.diagnosticos||'','','','','','','','','','','','','',f.largo||'',f.ancho||'',f.area||'','',vp(0,'ubicacion'),vp(0,'n'),vp(0,'e'),vp(1,'ubicacion'),vp(1,'n'),vp(1,'e'),vp(2,'ubicacion'),vp(2,'n'),vp(2,'e'),vp(3,'ubicacion'),vp(3,'n'),vp(3,'e'),vp(4,'ubicacion'),vp(4,'n'),vp(4,'e'),vp(5,'ubicacion'),vp(5,'n'),vp(5,'e'),vp(6,'ubicacion'),vp(6,'n'),vp(6,'e'),'',empl,f.emplDesc||'',f.conservacion||'',f.consDesc||'','','',f.responsable||'',f.fecha||'','','',f.obs||'',''];
   });
-
-  // Crear CSV como fallback (sin librería XLSX)
-  var csvRows=[headers].concat(rows);
-  var csv=csvRows.map(function(row){
-    return row.map(function(cell){
-      var s=String(cell||'').replace(/"/g,'""');
-      return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s+'"':s;
-    }).join(',');
-  }).join('\n');
-  var bom='\uFEFF';
-  var blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8'});
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  var d=new Date();
-  a.download='FichasAyS_'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
+  var csv=[headers].concat(rows).map(function(row){return row.map(function(cell){var s=String(cell||'').replace(/"/g,'""');return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s+'"':s;}).join(',');}).join('\n');
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  var d=new Date();a.download='FichasAyS_'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'.csv';
+  a.click();URL.revokeObjectURL(a.href);
   showToast('📊 CSV exportado: '+fichas.length+' fichas','success');
 }
 
-function showToast(msg,type){
-  var t=document.getElementById('toast');
-  t.textContent=msg;
-  t.className='toast'+(type?' '+type:'');
-  t.classList.add('show');
-  setTimeout(function(){t.classList.remove('show');},type==='success'?3000:2800);
-}
+function showToast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(type?' '+type:'');t.classList.add('show');setTimeout(function(){t.classList.remove('show');},type==='success'?3000:2800);}
 
 function exportPDF(){
   var data=getForm();
@@ -825,13 +813,9 @@ function exportPDF(){
   function chk(label,checked,x,yy){doc.setFillColor(checked?58:255,checked?125:255,checked?44:255);doc.setDrawColor(58,125,44);doc.rect(x,yy-3,3.5,3.5,checked?'F':'D');if(checked){doc.setTextColor(255,255,255);doc.setFontSize(5);doc.text('v',x+0.7,yy-0.2);}doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text(label,x+4.5,yy-0.2);}
   function np(n){if(y+n>ph-16){doc.addPage();y=14;}}
 
-  doc.setFillColor(45,106,31);doc.roundedRect(ml,y,22,22,3,3,'F');
-  doc.setFillColor(122,182,72);doc.roundedRect(ml,y+14,22,8,3,3,'F');
-  doc.setFillColor(45,106,31);doc.rect(ml,y+14,22,4,'F');
-  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('as',ml+4,y+11);
-  doc.setFontSize(5);doc.text('Ambiental',ml+2,y+18);doc.text('y Sectorial',ml+2,y+21.5);
-  doc.setTextColor(30,30,30);doc.setFont('helvetica','bold');doc.setFontSize(10.5);
-  doc.text('FICHA DE REGISTRO ARQUEOLÓGICO',ml+26,y+7);
+  doc.setFillColor(45,106,31);doc.roundedRect(ml,y,22,22,3,3,'F');doc.setFillColor(122,182,72);doc.roundedRect(ml,y+14,22,8,3,3,'F');doc.setFillColor(45,106,31);doc.rect(ml,y+14,22,4,'F');
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('as',ml+4,y+11);doc.setFontSize(5);doc.text('Ambiental',ml+2,y+18);doc.text('y Sectorial',ml+2,y+21.5);
+  doc.setTextColor(30,30,30);doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.text('FICHA DE REGISTRO ARQUEOLÓGICO',ml+26,y+7);
   doc.setFontSize(8);doc.setFont('helvetica','normal');doc.text('PROYECTO '+(data.proyecto||'').toUpperCase(),ml+26,y+13);
   if(data.codigo){doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(58,125,44);doc.text(data.codigo,pw-28,y+7);}
   y+=28;
@@ -847,14 +831,7 @@ function exportPDF(){
   [['UTM NORTE',data.utmN],['UTM ESTE',data.utmE],['HUSO',data.huso],['ALTITUD (msnm)',data.altitud]].forEach(function(p,i){bx(ml+gw*i,y,gw,7);lbl(p[0],ml+gw*i+1,y+3);val(p[1]||'',ml+gw*i+1,y+6.5);});y+=7;
   [['LAT (°)',data.lat],['LON (°)',data.lon],['ERROR GPS (±m)',data.error],['','']].forEach(function(p,i){bx(ml+gw*i,y,gw,7);if(p[0])lbl(p[0],ml+gw*i+1,y+3);val(p[1]||'',ml+gw*i+1,y+6.5);});y+=10;
 
-  if(data.vertices&&data.vertices.length){
-    np(20);y=sec('VÉRTICES DEL POLÍGONO',y)+2;
-    var vc=[15,45,cw/2-10,cw-60-cw/2+10];
-    doc.setFillColor(58,125,44);doc.rect(ml,y,vc[0],6,'F');doc.rect(ml+vc[0],y,vc[1],6,'F');doc.rect(ml+vc[0]+vc[1],y,vc[2],6,'F');doc.rect(ml+vc[0]+vc[1]+vc[2],y,vc[3],6,'F');
-    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(7);
-    doc.text('#',ml+5,y+4.2);doc.text('UBICACIÓN',ml+vc[0]+1,y+4.2);doc.text('UTM NORTE',ml+vc[0]+vc[1]+1,y+4.2);doc.text('UTM ESTE',ml+vc[0]+vc[1]+vc[2]+1,y+4.2);y+=6;
-    data.vertices.forEach(function(v,i){np(6);var fl=i%2===0?[255,255,255]:[245,250,243];bx(ml,y,vc[0],6,fl);bx(ml+vc[0],y,vc[1],6,fl);bx(ml+vc[0]+vc[1],y,vc[2],6,fl);bx(ml+vc[0]+vc[1]+vc[2],y,vc[3],6,fl);doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text(String(i+1),ml+5,y+4.2);doc.text(v.ubicacion||'',ml+vc[0]+1,y+4.2);doc.text(v.n||'',ml+vc[0]+vc[1]+1,y+4.2);doc.text(v.e||'',ml+vc[0]+vc[1]+vc[2]+1,y+4.2);y+=6;});y+=4;
-  }
+  if(data.vertices&&data.vertices.length){np(20);y=sec('VÉRTICES DEL POLÍGONO',y)+2;var vc=[15,45,cw/2-10,cw-60-cw/2+10];doc.setFillColor(58,125,44);doc.rect(ml,y,vc[0],6,'F');doc.rect(ml+vc[0],y,vc[1],6,'F');doc.rect(ml+vc[0]+vc[1],y,vc[2],6,'F');doc.rect(ml+vc[0]+vc[1]+vc[2],y,vc[3],6,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(7);doc.text('#',ml+5,y+4.2);doc.text('UBICACIÓN',ml+vc[0]+1,y+4.2);doc.text('UTM NORTE',ml+vc[0]+vc[1]+1,y+4.2);doc.text('UTM ESTE',ml+vc[0]+vc[1]+vc[2]+1,y+4.2);y+=6;data.vertices.forEach(function(v,i){np(6);var fl=i%2===0?[255,255,255]:[245,250,243];bx(ml,y,vc[0],6,fl);bx(ml+vc[0],y,vc[1],6,fl);bx(ml+vc[0]+vc[1],y,vc[2],6,fl);bx(ml+vc[0]+vc[1]+vc[2],y,vc[3],6,fl);doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text(String(i+1),ml+5,y+4.2);doc.text(v.ubicacion||'',ml+vc[0]+1,y+4.2);doc.text(v.n||'',ml+vc[0]+vc[1]+1,y+4.2);doc.text(v.e||'',ml+vc[0]+vc[1]+vc[2]+1,y+4.2);y+=6;});y+=4;}
 
   np(35);y=sec('CARACTERÍSTICAS GENERALES DEL SITIO/HALLAZGO',y)+2;
   bx(ml,y,cw,7);lbl('TIPO',ml+1,y+3);val(data.tipo,ml+20,y+6.5,cw-22);y+=9;
@@ -866,8 +843,7 @@ function exportPDF(){
   if(data.periodoEsp){doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(30,30,30);doc.text('Período específico: '+data.periodoEsp,ml+100,y+3);}
   y+=10;
 
-  np(25);y=sec('RECOLECCIÓN SUPERFICIAL ARQUEOLÓGICA',y)+3;
-  lbl('Tipo de recolección:',ml,y+3);chk('Decapado (5 cm)',data.recoleccion==='Decapado (5 cm)',ml+36,y+3);chk('Barrido',data.recoleccion==='Barrido',ml+72,y+3);y+=8;
+  np(25);y=sec('DIMENSIONES DE LA UNIDAD',y)+3;
   var dw=cw/3;bx(ml,y,dw,7);bx(ml+dw,y,dw,7);bx(ml+dw*2,y,dw,7);
   lbl('LARGO (m)',ml+1,y+3);lbl('ANCHO (m)',ml+dw+1,y+3);lbl('ÁREA (m²)',ml+dw*2+1,y+3);
   val(data.largo,ml+1,y+6.5);val(data.ancho,ml+dw+1,y+6.5);val(data.area,ml+dw*2+1,y+6.5);y+=10;
@@ -875,78 +851,36 @@ function exportPDF(){
   np(20);y=sec('MATERIAL ARQUEOLÓGICO RECOLECTADO',y)+1;
   var c1=40,c2=20,c3=cw-60;
   doc.setFillColor(58,125,44);doc.rect(ml,y,c1,6,'F');doc.rect(ml+c1,y,c2,6,'F');doc.rect(ml+c1+c2,y,c3,6,'F');
-  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(7);
-  doc.text('TIPOLOGÍA',ml+1,y+4.2);doc.text('CANT.',ml+c1+1,y+4.2);doc.text('DESCRIPCIÓN GENERAL',ml+c1+c2+1,y+4.2);y+=6;
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(7);doc.text('TIPOLOGÍA',ml+1,y+4.2);doc.text('CANT.',ml+c1+1,y+4.2);doc.text('DESCRIPCIÓN GENERAL',ml+c1+c2+1,y+4.2);y+=6;
   MATS.forEach(function(m,idx){np(7);var fl=idx%2===0?[255,255,255]:[245,250,243];bx(ml,y,c1,6,fl);bx(ml+c1,y,c2,6,fl);bx(ml+c1+c2,y,c3,6,fl);var md=data.mats&&data.mats[m]?data.mats[m]:{qty:'',desc:''};doc.setTextColor(30,30,30);doc.setFont('helvetica',md.qty||md.desc?'bold':'normal');doc.setFontSize(7.5);doc.text(m,ml+1,y+4.2);doc.setFont('helvetica','normal');doc.text(md.qty||'',ml+c1+2,y+4.2);doc.text((doc.splitTextToSize(md.desc||'',c3-2))[0]||'',ml+c1+c2+1,y+4.2);y+=6;});y+=4;
 
-  np(30);y=sec('DESCRIPCIÓN EN DETALLE DE MATERIALES DIAGNÓSTICOS',y)+2;
-  bx(ml,y,cw,25);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.diagnosticos||'',cw-4),ml+2,y+5);y+=29;
+  np(30);y=sec('DESCRIPCIÓN EN DETALLE DE MATERIALES DIAGNÓSTICOS',y)+2;bx(ml,y,cw,25);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.diagnosticos||'',cw-4),ml+2,y+5);y+=29;
 
-  if(data.estructuras&&data.estructuras.length){
-    np(20);y=sec('REGISTRO DE ESTRUCTURAS',y)+2;
-    data.estructuras.forEach(function(e,i){
-      np(40);
-      doc.setFillColor(232,245,226);doc.rect(ml,y,cw,6,'F');
-      doc.setTextColor(45,106,31);doc.setFont('helvetica','bold');doc.setFontSize(8);
-      doc.text('Estructura '+(i+1)+(e.nombre?' — '+e.nombre:''),ml+2,y+4.2);y+=8;
-      var ew=cw/3;
-      bx(ml,y,ew,7);bx(ml+ew,y,ew,7);bx(ml+ew*2,y,ew,7);
-      lbl('LARGO (m)',ml+1,y+3);lbl('ANCHO (m)',ml+ew+1,y+3);lbl('ALTO (m)',ml+ew*2+1,y+3);
-      val(e.largo||'',ml+1,y+6.5);val(e.ancho||'',ml+ew+1,y+6.5);val(e.alto||'',ml+ew*2+1,y+6.5);y+=7;
-      bx(ml,y,ew,7);bx(ml+ew,y,ew,7);bx(ml+ew*2,y,ew,7);
-      lbl('FORMA',ml+1,y+3);lbl('MATERIALIDAD',ml+ew+1,y+3);lbl('VANOS',ml+ew*2+1,y+3);
-      val(e.forma||'',ml+1,y+6.5);val(e.materialidad||'',ml+ew+1,y+6.5);val(e.vanos||'',ml+ew*2+1,y+6.5);y+=7;
-      bx(ml,y,ew,7);bx(ml+ew,y,ew,7);
-      lbl('N° HILERAS',ml+1,y+3);lbl('N° HILADAS',ml+ew+1,y+3);
-      val(e.hileras||'',ml+1,y+6.5);val(e.hiladas||'',ml+ew+1,y+6.5);y+=7;
-      if(e.obs){bx(ml,y,cw,12);lbl('Observaciones:',ml+1,y+3);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(e.obs,cw-4),ml+2,y+7);y+=14;}
-      y+=4;
-    });
-  }
+  if(data.estructuras&&data.estructuras.length){np(20);y=sec('REGISTRO DE ESTRUCTURAS',y)+2;data.estructuras.forEach(function(e,i){np(40);doc.setFillColor(232,245,226);doc.rect(ml,y,cw,6,'F');doc.setTextColor(45,106,31);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text('Estructura '+(i+1)+(e.nombre?' — '+e.nombre:''),ml+2,y+4.2);y+=8;var ew=cw/3;bx(ml,y,ew,7);bx(ml+ew,y,ew,7);bx(ml+ew*2,y,ew,7);lbl('LARGO (m)',ml+1,y+3);lbl('ANCHO (m)',ml+ew+1,y+3);lbl('ALTO (m)',ml+ew*2+1,y+3);val(e.largo||'',ml+1,y+6.5);val(e.ancho||'',ml+ew+1,y+6.5);val(e.alto||'',ml+ew*2+1,y+6.5);y+=7;bx(ml,y,ew,7);bx(ml+ew,y,ew,7);bx(ml+ew*2,y,ew,7);lbl('FORMA',ml+1,y+3);lbl('MATERIALIDAD',ml+ew+1,y+3);lbl('VANOS',ml+ew*2+1,y+3);val(e.forma||'',ml+1,y+6.5);val(e.materialidad||'',ml+ew+1,y+6.5);val(e.vanos||'',ml+ew*2+1,y+6.5);y+=7;bx(ml,y,ew,7);bx(ml+ew,y,ew,7);lbl('N° HILERAS',ml+1,y+3);lbl('N° HILADAS',ml+ew+1,y+3);val(e.hileras||'',ml+1,y+6.5);val(e.hiladas||'',ml+ew+1,y+6.5);y+=7;if(e.obs){bx(ml,y,cw,12);lbl('Obs:',ml+1,y+3);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(e.obs,cw-4),ml+2,y+7);y+=14;}y+=4;});}
 
   np(30);y=sec('EMPLAZAMIENTO DE LA UNIDAD DE RECOLECCIÓN',y)+3;
-  lbl('Emplazamiento:',ml,y+3);tx=ml+30;
-  ['Llanura','Lomaje','Ladera','Quebrada','Cerro','Terraza fluvial'].forEach(function(e){chk(e,data.emplazamiento&&data.emplazamiento.indexOf(e)>=0,tx,y+3);tx+=28;});
+  lbl('Emplazamiento:',ml,y+3);tx=ml+30;['Llanura','Lomaje','Ladera','Quebrada','Cerro','Terraza fluvial'].forEach(function(e){chk(e,data.emplazamiento&&data.emplazamiento.indexOf(e)>=0,tx,y+3);tx+=28;});
   if(data.emplOtro){y+=6;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(30,30,30);doc.text('Otro: '+data.emplOtro,ml,y+3);}
   y+=9;bx(ml,y,cw,18);lbl('Descripción:',ml+1,y+3);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.emplDesc||'',cw-4),ml+2,y+8);y+=22;
 
-  np(30);y=sec('ESTADO GENERAL DE CONSERVACIÓN',y)+3;
-  lbl('Estado:',ml,y+3);chk('Bueno',data.conservacion==='Bueno',ml+18,y+3);chk('Regular',data.conservacion==='Regular',ml+45,y+3);chk('Malo',data.conservacion==='Malo',ml+72,y+3);y+=9;
-  bx(ml,y,cw,18);lbl('Descripción:',ml+1,y+3);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.consDesc||'',cw-4),ml+2,y+8);y+=22;
+  np(30);y=sec('ESTADO GENERAL DE CONSERVACIÓN',y)+3;lbl('Estado:',ml,y+3);chk('Bueno',data.conservacion==='Bueno',ml+18,y+3);chk('Regular',data.conservacion==='Regular',ml+45,y+3);chk('Malo',data.conservacion==='Malo',ml+72,y+3);y+=9;bx(ml,y,cw,18);lbl('Descripción:',ml+1,y+3);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.consDesc||'',cw-4),ml+2,y+8);y+=22;
 
-  np(20);y=sec('RESPONSABLES',y)+2;
-  bx(ml,y,cw/2,7);bx(ml+cw/2,y,cw/4,7);bx(ml+cw*3/4,y,cw/4,7);
-  lbl('RESPONSABLE DE UNIDAD',ml+1,y+3);lbl('FECHA',ml+cw/2+1,y+3);lbl('CAMPAÑA',ml+cw*3/4+1,y+3);
-  val(data.responsable,ml+1,y+6.5,cw/2-3);val(data.fecha,ml+cw/2+1,y+6.5);val(data.campana,ml+cw*3/4+1,y+6.5);y+=7;
-  bx(ml,y,cw,7);lbl('AYUDANTE/ES DE UNIDAD',ml+1,y+3);val(data.ayudantes,ml+1,y+6.5,cw-3);y+=10;
+  np(20);y=sec('RESPONSABLES',y)+2;bx(ml,y,cw/2,7);bx(ml+cw/2,y,cw/4,7);bx(ml+cw*3/4,y,cw/4,7);lbl('RESPONSABLE DE UNIDAD',ml+1,y+3);lbl('FECHA',ml+cw/2+1,y+3);lbl('CAMPAÑA',ml+cw*3/4+1,y+3);val(data.responsable,ml+1,y+6.5,cw/2-3);val(data.fecha,ml+cw/2+1,y+6.5);val(data.campana,ml+cw*3/4+1,y+6.5);y+=7;bx(ml,y,cw,7);lbl('AYUDANTE/ES DE UNIDAD',ml+1,y+3);val(data.ayudantes,ml+1,y+6.5,cw-3);y+=10;
 
   if(data.obs){np(22);y=sec('OBSERVACIONES',y)+2;bx(ml,y,cw,18);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);doc.text(doc.splitTextToSize(data.obs,cw-4),ml+2,y+5);y+=22;}
 
-  np(15);y=sec('CROQUIS DE DISPERSIÓN DE MATERIAL ARQUEOLÓGICO SUPERFICIAL',y)+4;
-  try{doc.addImage(getCanvasData(),'PNG',ml,y,cw,60,'','MEDIUM');y+=64;}catch(e){y+=4;}
+  np(15);y=sec('CROQUIS DE DISPERSIÓN',y)+4;try{doc.addImage(getCanvasData(),'PNG',ml,y,cw,60,'','MEDIUM');y+=64;}catch(e){y+=4;}
 
-  if(data.photos&&data.photos.length){
-    np(15);y=sec('REGISTRO FOTOGRÁFICO',y)+4;
-    var iw=(cw-4)/2,ih=60;
-    data.photos.forEach(function(p,i){if(i%2===0&&i>0){y+=ih+5;}np(ih+10);var x=ml+(i%2)*(iw+4);try{doc.addImage(p,'JPEG',x,y,iw,ih,'','MEDIUM');}catch(e){}});
-    y+=ih+8;
-  }
+  if(data.photos&&data.photos.length){np(15);y=sec('REGISTRO FOTOGRÁFICO',y)+4;var iw=(cw-4)/2,ih=60;data.photos.forEach(function(p,i){if(i%2===0&&i>0){y+=ih+5;}np(ih+10);var x=ml+(i%2)*(iw+4);try{doc.addImage(p,'JPEG',x,y,iw,ih,'','MEDIUM');}catch(e){}});y+=ih+8;}
 
   var total=doc.internal.getNumberOfPages();
   for(var pg=1;pg<=total;pg++){doc.setPage(pg);doc.setDrawColor(58,125,44);doc.setLineWidth(0.5);doc.line(ml,ph-12,pw-14,ph-12);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100,100,100);doc.text('Ambiental y Sectorial  |  Ficha de Registro Arqueológico  |  '+(data.proyecto||''),ml,ph-8);doc.text('Página '+pg+' de '+total,pw-36,ph-8);}
   doc.save('Ficha_'+(data.codigo||'RS')+'_'+(data.sitio||'sin_nombre').replace(/\s+/g,'_')+'_'+data.fecha+'.pdf');
-  showToast('📄 PDF exportado correctamente','success');
+  showToast('📄 PDF exportado','success');
 }
 
 init();
-
-if('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/Ficha-Arqueologica/sw.js')
-      .then(function(reg) { console.log('SW registrado:', reg.scope); })
-      .catch(function(err) { console.log('SW error:', err); });
-  });
-}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/Ficha-Arqueologica/sw.js').then(function(r){console.log('SW:',r.scope);}).catch(function(e){console.log('SW error:',e);});});}
 </script>
 </body>
 </html>
